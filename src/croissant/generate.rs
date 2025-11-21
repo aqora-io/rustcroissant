@@ -41,7 +41,7 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
 
         let field = Field {
             id: field_id,
-            type_: "cr:Field".to_string(),
+            r#type: "cr:Field".to_string(),
             name: header.clone(),
             description: format!("Field for {header}"),
             data_type: data_type.to_schema_org().to_string(),
@@ -67,7 +67,7 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
 
     let metadata = Metadata {
         context: create_default_context(),
-        type_: "sc:Dataset".to_string(),
+        r#type: "sc:Dataset".to_string(),
         name: format!("{dataset_name}_dataset"),
         description: format!("Dataset created from {file_name}"),
         conforms_to: "http://mlcommons.org/croissant/1.0".to_string(),
@@ -75,7 +75,7 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
         version: "1.0.0".to_string(),
         distribution: vec![Distribution {
             id: file_name.clone(),
-            type_: "cr:FileObject".to_string(),
+            r#type: "cr:FileObject".to_string(),
             name: file_name.clone(),
             content_size: format!("{file_size} B"),
             content_url: file_name,
@@ -84,7 +84,7 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
         }],
         record_set: vec![RecordSet {
             id: "main".to_string(),
-            type_: "cr:RecordSet".to_string(),
+            r#type: "cr:RecordSet".to_string(),
             name: "main".to_string(),
             description: format!(
                 "Records from {}",

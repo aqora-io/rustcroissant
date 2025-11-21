@@ -1,135 +1,185 @@
 use chrono::DateTime;
 use serde;
 use serde::{Deserialize, Serialize};
-// ============================================================================
-// Core Croissant Structures
-// ============================================================================
+
+const CR_PREFIX: &str = "cr:";
+const SC_PREFIX: &str = "sc:";
 
 /// Field represents a field in the Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct Field {
     #[serde(rename = "@id")]
+    #[garde(length(min = 1))]
     pub id: String,
     #[serde(rename = "@type")]
-    pub type_: String,
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
+    pub r#type: String,
+    #[garde(length(min = 1))]
     pub name: String,
+    #[garde(length(min = 1))]
     pub description: String,
     #[serde(rename = "dataType")]
+    #[garde(length(min = 1))]
     pub data_type: String,
+    #[garde(dive)]
     pub source: FieldSource,
 }
 
 /// FieldSource represents the source information for a field
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct FieldSource {
+    #[garde(dive)]
     pub extract: Extract,
     #[serde(rename = "fileObject")]
+    #[garde(dive)]
     pub file_object: FileObject,
 }
 
 /// Extract represents the extraction information for a field source
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct Extract {
+    #[garde(length(min = 1))]
     pub column: String,
 }
 
 /// FileObject represents a file object reference
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct FileObject {
     #[serde(rename = "@id")]
+    #[garde(length(min = 1))]
     pub id: String,
 }
 
 /// Distribution represents a file in the Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct Distribution {
     #[serde(rename = "@id")]
+    #[garde(length(min = 1))]
     pub id: String,
     #[serde(rename = "@type")]
-    pub type_: String,
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
+    pub r#type: String,
+    #[garde(length(min = 1))]
     pub name: String,
     #[serde(rename = "contentSize")]
+    #[garde(length(min = 1))] // TODO: validate number
     pub content_size: String,
     #[serde(rename = "contentUrl")]
+    #[garde(url)]
     pub content_url: String,
     #[serde(rename = "encodingFormat")]
+    #[garde(length(min = 1))]
     pub encoding_format: String,
+    #[garde(length(min = 1))]
     pub sha256: String,
 }
 
 /// RecordSet represents a record set in the Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct RecordSet {
     #[serde(rename = "@id")]
+    #[garde(length(min = 1))]
     pub id: String,
     #[serde(rename = "@type")]
-    pub type_: String,
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
+    pub r#type: String,
+    #[garde(length(min = 1))]
     pub name: String,
+    #[garde(length(min = 1))]
     pub description: String,
+    #[garde(length(min = 0), dive)]
     pub field: Vec<Field>,
 }
 
 /// Context represents the JSON-LD context in the Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct Context {
     #[serde(rename = "@language")]
+    #[garde(length(min = 1))]
     pub language: String,
     #[serde(rename = "@vocab")]
+    #[garde(url)]
     pub vocab: String,
     #[serde(rename = "citeAs")]
+    #[garde(skip)] // TODO: validate BibTeX
     pub cite_as: String,
+    #[garde(skip)]
     pub column: String,
     #[serde(rename = "conformsTo")]
+    #[garde(url)]
     pub conforms_to: String,
+    #[garde(url)]
     pub cr: String,
+    #[garde(url)]
     pub dct: String,
+    #[garde(dive)]
     pub data: DataContext,
     #[serde(rename = "dataType")]
+    #[garde(dive)]
     pub data_type: DataTypeContext,
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
     pub extract: String,
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
     pub field: String,
     #[serde(rename = "fileObject")]
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
     pub file_object: String,
     #[serde(rename = "fileProperty")]
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
     pub file_property: String,
+    #[garde(url)]
     pub sc: String,
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
     pub source: String,
 }
 
 /// DataContext represents the data field in the context
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct DataContext {
     #[serde(rename = "@id")]
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
     pub id: String,
     #[serde(rename = "@type")]
-    pub type_: String,
+    #[garde(prefix("@"), length(min = 1))]
+    pub r#type: String,
 }
 
 /// DataTypeContext represents the dataType field in the context
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct DataTypeContext {
     #[serde(rename = "@id")]
+    #[garde(prefix(CR_PREFIX), length(min = 1))]
     pub id: String,
     #[serde(rename = "@type")]
-    pub type_: String,
+    #[garde(prefix("@"), length(min = 1))]
+    pub r#type: String,
 }
 
 /// Metadata represents the complete Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
 pub struct Metadata {
     #[serde(rename = "@context")]
+    #[garde(dive)]
     pub context: Context,
     #[serde(rename = "@type")]
-    pub type_: String,
+    #[garde(prefix(SC_PREFIX), length(min = 1))]
+    pub r#type: String,
+    #[garde(length(min = 1))]
     pub name: String,
+    #[garde(length(min = 1))]
     pub description: String,
     #[serde(rename = "conformsTo")]
+    #[garde(url)]
     pub conforms_to: String,
     #[serde(rename = "datePublished")]
+    #[garde(skip)] // TODO: validate date
     pub date_published: String,
+    #[garde(skip)] // TODO: validate SemVer
     pub version: String,
+    #[garde(length(min = 0), dive)]
     pub distribution: Vec<Distribution>,
     #[serde(rename = "recordSet")]
+    #[garde(length(min = 0), dive)]
     pub record_set: Vec<RecordSet>,
 }
 
@@ -209,11 +259,11 @@ pub fn create_default_context() -> Context {
         dct: "http://purl.org/dc/terms/".to_string(),
         data: DataContext {
             id: "cr:data".to_string(),
-            type_: "@json".to_string(),
+            r#type: "@json".to_string(),
         },
         data_type: DataTypeContext {
             id: "cr:dataType".to_string(),
-            type_: "@vocab".to_string(),
+            r#type: "@vocab".to_string(),
         },
         extract: "cr:extract".to_string(),
         field: "cr:field".to_string(),

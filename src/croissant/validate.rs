@@ -206,7 +206,7 @@ fn validate_metadata_basic(issues: &mut ValidationIssues, metadata: &Metadata) {
     }
 
     // Validate type
-    if metadata.type_ != "sc:Dataset" {
+    if metadata.r#type != "sc:Dataset" {
         issues.add_error_with_context(
             "The current JSON-LD doesn't extend https://schema.org/Dataset.",
             &context,
@@ -246,12 +246,12 @@ fn validate_distributions(issues: &mut ValidationIssues, metadata: &Metadata) {
         }
 
         // Validate type
-        if distribution.type_ != "cr:FileObject" && distribution.type_ != "cr:FileSet" {
+        if distribution.r#type != "cr:FileObject" && distribution.r#type != "cr:FileSet" {
             issues.add_error_with_context(
                 format!(
                     "\"{}\" should have an attribute \"@type\": \"http://mlcommons.org/croissant/FileObject\" or \"@type\": \"http://mlcommons.org/croissant/FileSet\". Got {} instead.",
                     distribution.name,
-                    distribution.type_
+                    distribution.r#type
                 ),
                 &context
             );
@@ -306,12 +306,12 @@ fn validate_record_sets(issues: &mut ValidationIssues, metadata: &Metadata) {
         }
 
         // Validate type
-        if record_set.type_ != "cr:RecordSet" {
+        if record_set.r#type != "cr:RecordSet" {
             issues.add_error_with_context(
                 format!(
                     "\"{}\" should have an attribute \"@type\": \"http://mlcommons.org/croissant/RecordSet\". Got {} instead.",
                     record_set.name,
-                    record_set.type_
+                    record_set.r#type
                 ),
                 &context
             );
@@ -338,12 +338,12 @@ fn validate_fields(issues: &mut ValidationIssues, metadata: &Metadata, record_se
         }
 
         // Validate type
-        if field.type_ != "cr:Field" {
+        if field.r#type != "cr:Field" {
             issues.add_error_with_context(
                 format!(
                     "\"{}\" should have an attribute \"@type\": \"http://mlcommons.org/croissant/Field\". Got {} instead.",
                     field.name,
-                    field.type_
+                    field.r#type
                 ),
                 &context
             );
