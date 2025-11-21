@@ -1,4 +1,5 @@
 use chrono::DateTime;
+use derive_builder::{self, Builder};
 use serde;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +7,7 @@ const CR_PREFIX: &str = "cr:";
 const SC_PREFIX: &str = "sc:";
 
 /// Field represents a field in the Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct Field {
     #[serde(rename = "@id")]
     #[garde(length(min = 1))]
@@ -25,8 +26,14 @@ pub struct Field {
     pub source: FieldSource,
 }
 
+impl Field {
+    pub fn builder() -> FieldBuilder {
+        FieldBuilder::default()
+    }
+}
+
 /// FieldSource represents the source information for a field
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct FieldSource {
     #[garde(dive)]
     pub extract: Extract,
@@ -35,23 +42,41 @@ pub struct FieldSource {
     pub file_object: FileObject,
 }
 
+impl FieldSource {
+    pub fn builder() -> FieldSourceBuilder {
+        FieldSourceBuilder::default()
+    }
+}
+
 /// Extract represents the extraction information for a field source
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct Extract {
     #[garde(length(min = 1))]
     pub column: String,
 }
 
+impl Extract {
+    pub fn builder() -> ExtractBuilder {
+        ExtractBuilder::default()
+    }
+}
+
 /// FileObject represents a file object reference
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct FileObject {
     #[serde(rename = "@id")]
     #[garde(length(min = 1))]
     pub id: String,
 }
 
+impl FileObject {
+    pub fn builder() -> FileObjectBuilder {
+        FileObjectBuilder::default()
+    }
+}
+
 /// Distribution represents a file in the Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct Distribution {
     #[serde(rename = "@id")]
     #[garde(length(min = 1))]
@@ -74,8 +99,14 @@ pub struct Distribution {
     pub sha256: String,
 }
 
+impl Distribution {
+    pub fn builder() -> DistributionBuilder {
+        DistributionBuilder::default()
+    }
+}
+
 /// RecordSet represents a record set in the Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct RecordSet {
     #[serde(rename = "@id")]
     #[garde(length(min = 1))]
@@ -91,8 +122,14 @@ pub struct RecordSet {
     pub field: Vec<Field>,
 }
 
+impl RecordSet {
+    pub fn builder() -> RecordSetBuilder {
+        RecordSetBuilder::default()
+    }
+}
+
 /// Context represents the JSON-LD context in the Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct Context {
     #[serde(rename = "@language")]
     #[garde(length(min = 1))]
@@ -133,8 +170,14 @@ pub struct Context {
     pub source: String,
 }
 
+impl Context {
+    pub fn builder() -> ContextBuilder {
+        ContextBuilder::default()
+    }
+}
+
 /// DataContext represents the data field in the context
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct DataContext {
     #[serde(rename = "@id")]
     #[garde(prefix(CR_PREFIX), length(min = 1))]
@@ -144,8 +187,14 @@ pub struct DataContext {
     pub r#type: String,
 }
 
+impl DataContext {
+    pub fn builder() -> DataContextBuilder {
+        DataContextBuilder::default()
+    }
+}
+
 /// DataTypeContext represents the dataType field in the context
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct DataTypeContext {
     #[serde(rename = "@id")]
     #[garde(prefix(CR_PREFIX), length(min = 1))]
@@ -155,8 +204,14 @@ pub struct DataTypeContext {
     pub r#type: String,
 }
 
+impl DataTypeContext {
+    pub fn builder() -> DataTypeContextBuilder {
+        DataTypeContextBuilder::default()
+    }
+}
+
 /// Metadata represents the complete Croissant metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, garde::Validate, Builder)]
 pub struct Metadata {
     #[serde(rename = "@context")]
     #[garde(dive)]
@@ -181,6 +236,12 @@ pub struct Metadata {
     #[serde(rename = "recordSet")]
     #[garde(length(min = 0), dive)]
     pub record_set: Vec<RecordSet>,
+}
+
+impl Metadata {
+    pub fn builder() -> MetadataBuilder {
+        MetadataBuilder::default()
+    }
 }
 
 // ============================================================================
@@ -249,27 +310,34 @@ pub fn infer_data_type(value: &str) -> DataType {
 
 /// Create the default context for Croissant metadata
 pub fn create_default_context() -> Context {
-    Context {
-        language: "en".to_string(),
-        vocab: "https://schema.org/".to_string(),
-        cite_as: "cr:citeAs".to_string(),
-        column: "cr:column".to_string(),
-        conforms_to: "dct:conformsTo".to_string(),
-        cr: "http://mlcommons.org/croissant/".to_string(),
-        dct: "http://purl.org/dc/terms/".to_string(),
-        data: DataContext {
-            id: "cr:data".to_string(),
-            r#type: "@json".to_string(),
-        },
-        data_type: DataTypeContext {
-            id: "cr:dataType".to_string(),
-            r#type: "@vocab".to_string(),
-        },
-        extract: "cr:extract".to_string(),
-        field: "cr:field".to_string(),
-        file_object: "cr:fileObject".to_string(),
-        file_property: "cr:fileProperty".to_string(),
-        sc: "https://schema.org/".to_string(),
-        source: "cr:source".to_string(),
-    }
+    Context::builder()
+        .language("en".to_string())
+        .vocab("https://schema.org/".to_string())
+        .cite_as("cr:citeAs".to_string())
+        .column("cr:column".to_string())
+        .conforms_to("dct:conforms_to".to_string())
+        .cr("http://purl.org/dc/terms/".to_string())
+        .data(
+            DataContext::builder()
+                .id("cr:data".to_string())
+                .r#type("@json".to_string())
+                .build()
+                .unwrap(), // TODO: error,
+        )
+        .data_type(
+            DataTypeContext::builder()
+                .id("cr:DataType".to_string())
+                .r#type("@vocal".to_string())
+                .build()
+                .unwrap(), // TODO:
+                           // error handling
+        )
+        .extract("cr:extract".to_string())
+        .field("cr:field".to_string())
+        .file_object("cr:fileObject".to_string())
+        .file_property("cr:fileProperty".to_string())
+        .sc("https://schema.org/".to_string())
+        .source("cr:source".to_string())
+        .build()
+        .unwrap() // TODO: real error handling
 }

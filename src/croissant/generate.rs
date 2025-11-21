@@ -39,21 +39,25 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
             }
         }
 
-        let field = Field {
-            id: field_id,
-            r#type: "cr:Field".to_string(),
-            name: header.clone(),
-            description: format!("Field for {header}"),
-            data_type: data_type.to_schema_org().to_string(),
-            source: FieldSource {
-                extract: Extract {
-                    column: header.clone(),
-                },
-                file_object: FileObject {
-                    id: file_name.clone(),
-                },
-            },
-        };
+        let field = Field::builder()
+            .id(field_id)
+            .r#type("cr:Field".to_string())
+            .name(header.clone())
+            .description(format!("Field for {header}"))
+            .data_type(data_type.to_schema_org().to_string())
+            .source(
+                FieldSource::builder()
+                    .extract(Extract {
+                        column: header.clone(),
+                    })
+                    .file_object(FileObject {
+                        id: file_name.clone(),
+                    })
+                    .build()
+                    .unwrap(),
+            )
+            .build()
+            .unwrap();
 
         fields.push(field);
     }
@@ -65,34 +69,41 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
         .to_string_lossy()
         .to_string();
 
-    let metadata = Metadata {
-        context: create_default_context(),
-        r#type: "sc:Dataset".to_string(),
-        name: format!("{dataset_name}_dataset"),
-        description: format!("Dataset created from {file_name}"),
-        conforms_to: "http://mlcommons.org/croissant/1.0".to_string(),
-        date_published: Utc::now().format("%Y-%m-%d").to_string(),
-        version: "1.0.0".to_string(),
-        distribution: vec![Distribution {
-            id: file_name.clone(),
-            r#type: "cr:FileObject".to_string(),
-            name: file_name.clone(),
-            content_size: format!("{file_size} B"),
-            content_url: file_name,
-            encoding_format: "text/csv".to_string(),
-            sha256: file_sha256,
-        }],
-        record_set: vec![RecordSet {
-            id: "main".to_string(),
-            r#type: "cr:RecordSet".to_string(),
-            name: "main".to_string(),
-            description: format!(
-                "Records from {}",
-                csv_path.file_name().unwrap().to_string_lossy()
-            ),
-            field: fields,
-        }],
-    };
+    let metadata = Metadata::builder()
+        .context(create_default_context())
+        .r#type("sc:Dataset".to_string())
+        .name(format!("{dataset_name}_dataset"))
+        .description(format!("Dataset created from {file_name}"))
+        .description("http://mlcommons.org/croissant/1.0".to_string())
+        .date_published(Utc::now().format("%Y-%m-%d").to_string())
+        .version("1.0.0".to_string())
+        .distribution(vec![
+            Distribution::builder()
+                .id(file_name.clone())
+                .r#type("cr:FileObject".to_string())
+                .name(file_name.clone())
+                .content_size(format!("{file_size} B"))
+                .content_url(file_name)
+                .encoding_format("text/csv".to_string())
+                .sha256(file_sha256)
+                .build()
+                .unwrap(), // TODO: error
+        ])
+        .record_set(vec![
+            RecordSet::builder()
+                .id("main".to_string())
+                .r#type("cr:RecordSet".to_string())
+                .name("main".to_string())
+                .description(format!(
+                    "Records from {}",
+                    csv_path.file_name().unwrap().to_string_lossy()
+                ))
+                .field(fields)
+                .build()
+                .unwrap(),
+        ])
+        .build()
+        .unwrap(); // TODO: error
 
     // Write metadata to file if output path is provided
     if let Some(output_path) = output_path {
