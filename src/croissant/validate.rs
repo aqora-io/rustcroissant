@@ -1,6 +1,9 @@
 //! Validation logic for Croissant metadata
+use crate::croissant::core::CrType;
+use crate::croissant::core::CroissantType;
 use crate::croissant::core::Metadata;
 use crate::croissant::core::RecordSet;
+use crate::croissant::core::SourceRef;
 use crate::croissant::errors::{Error, Result};
 use std::collections::HashSet;
 use std::path::Path;
@@ -198,7 +201,7 @@ fn validate_metadata_basic(issues: &mut ValidationIssues, metadata: &Metadata) {
     let context = format!("Metadata({})", metadata.name);
 
     // Validate required fields
-    if metadata.name.is_empty() {
+    if metadata.name.0.is_empty() {
         issues.add_error_with_context(
             "Property \"https://schema.org/name\" is mandatory, but does not exist.",
             &context,
@@ -206,7 +209,7 @@ fn validate_metadata_basic(issues: &mut ValidationIssues, metadata: &Metadata) {
     }
 
     // Validate type
-    if metadata.type_ != "sc:Dataset" {
+    if metadata.kind != CroissantType::Dataset {
         issues.add_error_with_context(
             "The current JSON-LD doesn't extend https://schema.org/Dataset.",
             &context,
@@ -214,7 +217,7 @@ fn validate_metadata_basic(issues: &mut ValidationIssues, metadata: &Metadata) {
     }
 
     // Validate conformsTo is set
-    if metadata.conforms_to.is_empty() {
+    if metadata.conforms_to.0.is_empty() {
         issues.add_warning_with_context(
             "Property \"http://purl.org/dc/terms/conformsTo\" is recommended, but does not exist.",
             &context,
@@ -222,7 +225,7 @@ fn validate_metadata_basic(issues: &mut ValidationIssues, metadata: &Metadata) {
     }
 
     // Validate description
-    if metadata.description.is_empty() {
+    if metadata.description.0.is_empty() {
         issues.add_warning_with_context(
             "Property \"https://schema.org/description\" is recommended, but does not exist.",
             &context,
@@ -234,103 +237,105 @@ fn validate_distributions(issues: &mut ValidationIssues, metadata: &Metadata) {
     for distribution in &metadata.distribution {
         let context = format!(
             "Metadata({}) > FileObject({})",
-            metadata.name, distribution.name
+            metadata.name, distribution.resource
         );
 
-        // Validate required fields
-        if distribution.name.is_empty() {
-            issues.add_error_with_context(
-                "Property \"https://schema.org/name\" is mandatory, but does not exist.",
-                &context,
-            );
-        }
-
-        // Validate type
-        if distribution.type_ != "cr:FileObject" && distribution.type_ != "cr:FileSet" {
-            issues.add_error_with_context(
-                format!(
-                    "\"{}\" should have an attribute \"@type\": \"http://mlcommons.org/croissant/FileObject\" or \"@type\": \"http://mlcommons.org/croissant/FileSet\". Got {} instead.",
-                    distribution.name,
-                    distribution.type_
-                ),
-                &context
-            );
-        }
-
-        // Validate content URL
-        if distribution.content_url.is_empty() {
-            issues.add_error_with_context(
+        match &distribution.resource {
+            crate::croissant::core::Resource::FileObject(file_object) => {
+                if file_object.content_url.is_none() {
+                    issues.add_error_with_context(
                 "Property \"https://schema.org/contentUrl\" is mandatory, but does not exist.",
                 &context,
             );
-        }
+                }
 
-        // Validate encoding format
-        if distribution.encoding_format.is_empty() {
-            issues.add_error_with_context(
+                // Validate encoding format
+                if file_object.encoding_format.0.is_empty() {
+                    issues.add_error_with_context(
                 "Property \"https://schema.org/encodingFormat\" is mandatory, but does not exist.",
                 &context,
             );
-        }
+                }
 
-        // Validate SHA256
-        if distribution.sha256.is_empty() {
-            issues.add_warning_with_context(
+                // Validate SHA256
+                if file_object.sha256.is_none() {
+                    issues.add_warning_with_context(
                 "Property \"https://schema.org/sha256\" is recommended for file integrity verification.",
                 &context
             );
-        } else if distribution.sha256.len() != 64
-            || !distribution.sha256.chars().all(|c| c.is_ascii_hexdigit())
-        {
-            issues.add_error_with_context(
-                "Invalid SHA256 hash format. Expected 64 hexadecimal characters.",
+                } else if file_object.sha256.is_some()
+                    || file_object.sha256.as_ref().unwrap().len() != 64
+                    || !file_object
+                        .sha256
+                        .as_ref()
+                        .unwrap()
+                        .chars()
+                        .all(|c| c.is_ascii_hexdigit())
+                {
+                    issues.add_error_with_context(
+                        "Invalid SHA256 hash format. Expected 64 hexadecimal characters.",
+                        &context,
+                    );
+                }
+            }
+            crate::croissant::core::Resource::FileSet(file_set) => {
+                // Validate encoding format
+                if file_set.encoding_format.0.is_empty() {
+                    issues.add_error_with_context(
+                "Property \"https://schema.org/encodingFormat\" is mandatory, but does not exist.",
                 &context,
             );
+                }
+            }
         }
     }
 }
 
 fn validate_record_sets(issues: &mut ValidationIssues, metadata: &Metadata) {
-    for record_set in &metadata.record_set {
-        let context = format!(
-            "Metadata({}) > RecordSet({})",
-            metadata.name, record_set.name
-        );
+    match &metadata.record_sets {
+        None => (),
+        Some(record_sets) => {
+            for record_set in record_sets {
+                let context = format!(
+                    "Metadata({}) > RecordSet({})",
+                    metadata.name, record_set.kind
+                );
 
-        // Validate required fields
-        if record_set.name.is_empty() {
-            issues.add_error_with_context(
-                "Property \"https://schema.org/name\" is mandatory, but does not exist.",
-                &context,
-            );
-        }
+                // Validate required fields
+                if record_set.id.0.is_empty() {
+                    issues.add_error_with_context(
+                        "Property \"https://schema.org/name\" is mandatory, but does not exist.",
+                        &context,
+                    );
+                }
 
-        // Validate type
-        if record_set.type_ != "cr:RecordSet" {
-            issues.add_error_with_context(
+                // Validate type
+                if record_set.kind != CrType::RecordSet {
+                    issues.add_error_with_context(
                 format!(
                     "\"{}\" should have an attribute \"@type\": \"http://mlcommons.org/croissant/RecordSet\". Got {} instead.",
-                    record_set.name,
-                    record_set.type_
+                    record_set.id,
+                    record_set.kind,
                 ),
                 &context
             );
-        }
+                }
 
-        // Validate fields
-        validate_fields(issues, metadata, record_set);
+                validate_fields(issues, metadata, record_set);
+            }
+        }
     }
 }
 
 fn validate_fields(issues: &mut ValidationIssues, metadata: &Metadata, record_set: &RecordSet) {
-    for field in &record_set.field {
+    for field in &record_set.fields {
         let context = format!(
             "Metadata({}) > RecordSet({}) > Field({})",
-            metadata.name, record_set.name, field.name
+            metadata.name, record_set.kind, field.name
         );
 
         // Validate required fields
-        if field.name.is_empty() {
+        if field.name.0.is_empty() {
             issues.add_error_with_context(
                 "Property \"https://schema.org/name\" is mandatory, but does not exist.",
                 &context,
@@ -338,61 +343,47 @@ fn validate_fields(issues: &mut ValidationIssues, metadata: &Metadata, record_se
         }
 
         // Validate type
-        if field.type_ != "cr:Field" {
+        if field.kind != CrType::Field {
             issues.add_error_with_context(
                 format!(
                     "\"{}\" should have an attribute \"@type\": \"http://mlcommons.org/croissant/Field\". Got {} instead.",
                     field.name,
-                    field.type_
+                    field.kind
                 ),
                 &context
             );
         }
 
-        // Validate data type
-        if field.data_type.is_empty() {
-            issues.add_error_with_context(
-                format!(
-                    "The field does not specify a valid http://mlcommons.org/croissant/dataType, neither does any of its predecessor. Got: {}",
-                    field.data_type
-                ),
-                &context
-            );
-        } else {
-            validate_data_type(&field.data_type, issues, &context);
-        }
+        match &field.source {
+            Some(source) =>
+            // Validate source
+            {
+                match &source.extract {
+                    Some(extract) => {
+                        let is_empty = match extract {
+                            crate::croissant::core::Extract::Column { name } => name.0.is_empty(),
 
-        // Validate source
-        if field.source.extract.column.is_empty() || field.source.file_object.id.is_empty() {
-            issues.add_error_with_context(
+                            _ => false,
+                        };
+                        let is_file_object_empty = match &source.source {
+                            SourceRef::FileObject { file_object } => file_object.id.0.is_empty(),
+                            _ => false,
+                        };
+                        if is_empty || is_file_object_empty {
+                            issues.add_error_with_context(
                 format!(
                     "Node \"{}\" is a field and has no source. Please, use http://mlcommons.org/croissant/source to specify the source.",
                     field.id
                 ),
                 &context
-            );
-        }
-    }
-}
-
-fn validate_data_type(data_type: &str, issues: &mut ValidationIssues, context: &str) {
-    let valid_types = [
-        "sc:Text",
-        "sc:Integer",
-        "sc:Float",
-        "sc:Boolean",
-        "sc:Date",
-        "sc:DateTime",
-        "sc:Time",
-        "sc:URL",
-        "sc:Number",
-    ];
-
-    if !valid_types.contains(&data_type) {
-        issues.add_warning_with_context(
-            format!("Unknown data type: {data_type}. Consider using a standard schema.org type."),
-            context,
-        );
+            )
+                        }
+                    }
+                    None => (),
+                }
+            }
+            None => (),
+        };
     }
 }
 
@@ -401,23 +392,40 @@ fn validate_references(issues: &mut ValidationIssues, metadata: &Metadata) {
     let distribution_ids: HashSet<_> = metadata
         .distribution
         .iter()
-        .map(|dist| dist.id.as_str())
+        .map(|dist| match &dist.resource {
+            super::core::Resource::FileObject(file_object) => file_object.id.to_owned(),
+            super::core::Resource::FileSet(file_set) => file_set.id.to_owned(),
+        })
         .collect();
 
+    let record_sets = match &metadata.record_sets {
+        Some(record_sets) => record_sets,
+        None => return,
+    };
+
     // Validate field references to file objects
-    for record_set in &metadata.record_set {
-        for field in &record_set.field {
-            let file_object_id = &field.source.file_object.id;
-            if !file_object_id.is_empty() && !distribution_ids.contains(file_object_id.as_str()) {
-                let context = format!(
-                    "Metadata({}) > RecordSet({}) > Field({})",
-                    metadata.name, record_set.name, field.name
-                );
-                issues.add_error_with_context(
-                    format!("Field references non-existent file object: {file_object_id}"),
-                    &context,
-                );
-            }
+    for record_set in record_sets {
+        for field in &record_set.fields {
+            match &field.source {
+                Some(source) => {
+                    let file_object_id = match &source.source {
+                        SourceRef::FileObject { file_object } => file_object.id.to_owned(),
+                        SourceRef::RecordSet { record_set } => record_set.id.to_owned(),
+                        SourceRef::FileSet { file_set } => file_set.id.to_owned(),
+                    };
+                    if !file_object_id.0.is_empty() && !distribution_ids.contains(&file_object_id) {
+                        let context = format!(
+                            "Metadata({}) > RecordSet({}) > Field({})",
+                            metadata.name, record_set.kind, field.name
+                        );
+                        issues.add_error_with_context(
+                            format!("Field references non-existent file object: {file_object_id}"),
+                            &context,
+                        );
+                    }
+                }
+                None => (),
+            };
         }
     }
 }

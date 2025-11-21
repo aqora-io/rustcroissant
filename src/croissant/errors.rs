@@ -48,6 +48,12 @@ pub enum Error {
     /// Generic error
     #[error("Error: {0}")]
     Generic(String),
+
+    #[error("Builder: {0}")]
+    Builder(String),
+
+    #[error("report {0}")]
+    Report(#[from] garde::Report),
 }
 
 impl Error {

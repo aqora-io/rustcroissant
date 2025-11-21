@@ -90,20 +90,11 @@ fn main() {
                 .get_one::<String>("input")
                 .expect("Input JSON-LD file required");
             let input_path = std::path::Path::new(input);
+
             match rustcroissant::croissant::validate::validate_file(input_path) {
-                Ok(issues) => {
-                    if issues.is_empty() {
-                        println!("Validation passed with no issues.");
-                    } else {
-                        println!("{}", issues.report());
-                        if issues.has_errors() {
-                            std::process::exit(1);
-                        }
-                    }
-                }
+                Ok(validate) => println!("{:?}", validate),
                 Err(e) => {
                     eprintln!("Error validating metadata: {e}");
-                    std::process::exit(1);
                 }
             }
         }
