@@ -45,7 +45,7 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
             .name(Text::new(header))
             .description(Text::new(format!("Field for {header}")))
             .data_types(vec![data_type])
-            .source(Some(
+            .source(
                 FieldSource::builder()
                     .extract(Some(Extract::Column {
                         name: Text::new(header),
@@ -57,7 +57,7 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
                     })
                     .build()
                     .map_err(|e| Error::Builder(e.to_string()))?,
-            ))
+            )
             .build()
             .map_err(|e| Error::Builder(e.to_string()))?;
 
@@ -93,7 +93,7 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
                 .build()
                 .unwrap(), // TODO: error
         ])
-        .record_sets(Some(vec![
+        .record_sets(vec![
             RecordSet::builder()
                 .id(Id::new("main"))
                 .kind(crate::croissant::core::CrType::RecordSet)
@@ -103,7 +103,7 @@ pub fn generate_metadata_from_csv(csv_path: &Path, output_path: Option<&Path>) -
                 .fields(fields)
                 .build()
                 .map_err(|e| Error::Builder(e.to_string()))?,
-        ]))
+        ])
         .build()
         .unwrap(); // TODO: error
 

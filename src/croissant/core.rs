@@ -3,6 +3,7 @@ use derive_builder::Builder;
 use garde::Validate;
 use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::{borrow::Cow, fmt};
 
 use crate::croissant::{self, errors::Error};
@@ -21,6 +22,7 @@ where
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Validate)]
+#[garde(context(MetadataContext))]
 pub struct Text(#[garde(length(min = 1))] pub Cow<'static, str>);
 
 impl Text {
@@ -39,6 +41,7 @@ impl fmt::Display for Id {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
+#[garde(context(MetadataContext))]
 pub enum CroissantType {
     #[serde(rename = "sc:Dataset")]
     Dataset,
@@ -46,6 +49,7 @@ pub enum CroissantType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
+#[garde(context(MetadataContext))]
 pub enum CrType {
     #[serde(rename = "cr:RecordSet")]
     RecordSet,
@@ -71,6 +75,7 @@ impl fmt::Display for CrType {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Validate)]
 #[serde(untagged)]
+#[garde(context(MetadataContext))]
 pub enum DataType {
     #[serde(rename = "sc:Enumeration")]
     Enumeration,
@@ -155,6 +160,7 @@ impl From<&String> for DataType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Validate)]
+#[garde(context(MetadataContext))]
 pub enum BoundingBoxFormat {
     CenterXywh,
     Xywh,
@@ -174,6 +180,7 @@ impl fmt::Display for BoundingBoxFormat {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
 #[serde(tag = "@type")]
+#[garde(context(MetadataContext))]
 pub enum Resource {
     #[serde(rename = "cr:FileObject")]
     #[garde(dive)]
@@ -195,16 +202,16 @@ impl fmt::Display for Resource {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
-
+#[garde(context(MetadataContext))]
 pub struct FileObject {
     #[serde(rename = "@id")]
     #[garde(dive)]
     pub id: Id,
     #[garde(dive)]
     pub name: Text,
-    #[serde(rename = "contentText", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "contentUrl")]
     #[garde(dive)]
-    pub content_url: Option<Text>,
+    pub content_url: Text,
     #[serde(rename = "contentSize")]
     #[garde(dive)]
     pub content_size: Option<Text>,
@@ -222,6 +229,7 @@ impl FileObject {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct FileSet {
     #[serde(rename = "@id")]
     #[garde(dive)]
@@ -240,6 +248,7 @@ pub struct FileSet {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
 #[serde(untagged)]
+#[garde(context(MetadataContext))]
 pub enum Extract {
     #[garde(dive)]
     Column {
@@ -264,6 +273,7 @@ pub enum Extract {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Validate)]
+#[garde(context(MetadataContext))]
 pub enum FileProperty {
     #[serde(rename = "fullpath")]
     FullPath,
@@ -279,6 +289,7 @@ pub enum FileProperty {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
 #[serde(untagged)]
+#[garde(context(MetadataContext))]
 pub enum Transform {
     #[garde(dive)]
     Regex {
@@ -304,6 +315,7 @@ pub enum Transform {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
 #[serde(tag = "kind")]
+#[garde(context(MetadataContext))]
 pub enum ValueFormat {
     #[serde(rename = "date")]
     #[garde(dive)]
@@ -328,6 +340,7 @@ pub enum ValueFormat {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct FieldSource {
     #[serde(flatten)]
     #[garde(dive)]
@@ -348,6 +361,7 @@ impl FieldSource {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
 #[serde(untagged)]
+#[garde(context(MetadataContext))]
 pub enum SourceRef {
     FileObject {
         #[serde(rename = "fileObject")]
@@ -367,6 +381,7 @@ pub enum SourceRef {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
+#[garde(context(MetadataContext))]
 pub struct Ref {
     #[serde(rename = "@id")]
     #[garde(dive)]
@@ -374,19 +389,21 @@ pub struct Ref {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
+#[garde(context(MetadataContext))]
 pub struct FieldRef {
     #[garde(dive)]
     pub field: Ref,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct Field {
     #[serde(rename = "@id")]
     #[garde(dive)]
     pub id: Id,
     #[serde(rename = "@type")]
     #[garde(dive)]
-    pub kind: CrType,
+    pub kind: CrType, // TODO: Should be on Field
     #[garde(dive)]
     pub name: Text,
     #[garde(dive)]
@@ -396,7 +413,7 @@ pub struct Field {
     pub data_types: Vec<DataType>,
     #[serde(rename = "source")]
     #[garde(dive)]
-    pub source: Option<FieldSource>,
+    pub source: FieldSource,
     #[garde(dive)]
     #[serde(rename = "references", default, deserialize_with = "one_or_many")]
     pub references: Vec<FieldRef>,
@@ -419,13 +436,35 @@ impl Field {
     }
 }
 
+pub fn validate_record_set_references(
+    record_set: &RecordSet,
+    ctx: &MetadataContext,
+) -> garde::Result {
+    for field in &record_set.fields {
+        let ref_id = match &field.source.source {
+            SourceRef::FileObject { file_object } => file_object.id.clone(),
+            SourceRef::RecordSet { record_set } => record_set.id.clone(),
+            SourceRef::FileSet { file_set } => file_set.id.clone(),
+        };
+
+        if !ref_id.0.is_empty() && !ctx.distribution_ids.contains(&ref_id) {
+            return Err(garde::Error::new(format!(
+                "Field '{}' references non-existent distribution id '{}'",
+                field.name, ref_id
+            )));
+        }
+    }
+    Ok(())
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct RecordSet {
     #[serde(rename = "@id")]
     #[garde(dive)]
     pub id: Id,
     #[serde(rename = "@type")]
-    #[garde(dive)]
+    #[garde(dive)] // TODO: Should be only one value of CrType
     pub kind: CrType,
     #[serde(rename = "key", default, deserialize_with = "one_or_many")]
     #[garde(dive)]
@@ -445,6 +484,7 @@ impl RecordSet {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct Distribution {
     #[serde(flatten)]
     #[garde(dive)]
@@ -458,6 +498,7 @@ impl Distribution {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct Context {
     #[serde(rename = "@language")]
     #[garde(dive)]
@@ -525,6 +566,7 @@ pub fn default_context() -> Result<Context, croissant::errors::Error> {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct DataContext {
     #[serde(rename = "@id")]
     #[garde(dive)]
@@ -541,6 +583,7 @@ impl DataContext {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct DataTypeContext {
     #[serde(rename = "@id")]
     #[garde(dive)]
@@ -556,7 +599,13 @@ impl DataTypeContext {
     }
 }
 
+#[derive(Clone, Default, Debug)]
+pub struct MetadataContext {
+    distribution_ids: HashSet<Id>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder, Validate)]
+#[garde(context(MetadataContext))]
 pub struct Metadata {
     #[serde(rename = "@context")]
     #[garde(dive)]
@@ -579,12 +628,29 @@ pub struct Metadata {
     #[garde(dive)]
     pub distribution: Vec<Distribution>,
     #[serde(rename = "recordSet")]
-    #[garde(length(min = 0), dive)]
-    pub record_sets: Option<Vec<RecordSet>>,
+    #[garde(length(min = 1), inner(custom(validate_record_set_references)))]
+    pub record_sets: Vec<RecordSet>,
 }
 
 impl Metadata {
     pub fn builder() -> MetadataBuilder {
         MetadataBuilder::default()
+    }
+}
+
+impl Metadata {
+    pub fn check(&self) -> Result<(), garde::Report> {
+        let ctx = MetadataContext {
+            distribution_ids: self
+                .distribution
+                .iter()
+                .map(|d| match &d.resource {
+                    Resource::FileObject(o) => o.id.clone(),
+                    Resource::FileSet(s) => s.id.clone(),
+                })
+                .collect(),
+        };
+
+        self.validate_with(&ctx)
     }
 }
