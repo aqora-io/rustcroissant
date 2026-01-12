@@ -2,6 +2,15 @@
 name = "rustcroissant"
 version = "0.0.0"
 edition = "2024"
+readme = "README.md"
+
+[lib]
+name = "rustcroissant"
+path = "src/lib.rs"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 anyhow = "1"
