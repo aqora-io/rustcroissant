@@ -2,7 +2,7 @@ use schematic::Config;
 use serde::{Deserialize, Serialize};
 
 use crate::specs::{
-    common::{Id, Iri, JsonObject, NonEmptyString, Ref},
+    common::{Id, Iri, JsonObject, NonEmptyString, Ref, UrlOrRelativePath},
     serde::one_or_many,
 };
 
@@ -35,12 +35,12 @@ pub struct FileObject {
 
     pub description: Option<NonEmptyString>,
 
-    #[setting(validate = schematic::validate::url)]
-    pub content_url: String,
+    pub content_url: UrlOrRelativePath,
 
     pub encoding_format: Iri,
 
-    pub content_size: Option<NonEmptyString>,
+    #[setting(validate = schematic::validate::regex("^[0-9]+ B"))]
+    pub content_size: Option<String>,
 
     #[serde(default, deserialize_with = "one_or_many")]
     pub same_as: Vec<Iri>,

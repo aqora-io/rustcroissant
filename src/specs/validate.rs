@@ -88,7 +88,9 @@ pub fn validate_record_sets(
 
     for rs in value {
         for k in &rs.key {
-            if !field_ids.contains(&k.id.0) {
+            if !field_ids.contains(&k.id.0)
+                && !field_ids.contains(&format!("{}/{}", rs.id.0, k.id.0))
+            {
                 return Err(ValidateError::new(format!(
                     "RecordSet '{}' key references missing Field id '{}'",
                     rs.id.0, k.id.0
@@ -146,10 +148,10 @@ fn validate_field(
     f: &Field,
 ) -> ValidateResult {
     for r in &f.references {
-        if !field_ids.contains(&r.id.0) {
+        if !field_ids.contains(&r.field.id.0) {
             return Err(ValidateError::new(format!(
                 "Field '{}' in RecordSet '{}' references missing Field id '{}'",
-                f.id.0, rs.id.0, r.id.0
+                f.id.0, rs.id.0, r.field.id.0
             )));
         }
     }

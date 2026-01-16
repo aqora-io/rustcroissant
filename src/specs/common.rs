@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use relative_path::RelativePathBuf;
 use schematic::{Config, ConfigEnum};
 use serde::{Deserialize, Serialize};
 
@@ -36,6 +37,14 @@ pub struct Ref {
 pub enum IriOrObject {
     Iri(Iri),
     Object(JsonObject),
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Config)]
+#[serde(untagged)]
+pub enum UrlOrRelativePath {
+    #[setting(validate = schematic::validate::url)]
+    Url(String),
+    Path(RelativePathBuf),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, ConfigEnum)]

@@ -81,7 +81,7 @@ pub struct Field {
     pub equivalent_property: Vec<Iri>,
 
     #[serde(default, deserialize_with = "one_or_many")]
-    pub references: Vec<Ref>,
+    pub references: Vec<FieldRef>,
 
     #[serde(default)]
     pub sub_field: Vec<Field>,
@@ -91,6 +91,12 @@ pub struct Field {
 
     #[serde(flatten, default)]
     pub extra: JsonObject,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Config)]
+#[serde(rename_all = "camelCase")]
+pub struct FieldRef {
+    pub field: Ref,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Config)]

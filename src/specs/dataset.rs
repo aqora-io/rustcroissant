@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::specs::{
     agent::Agent,
-    common::{DatasetType, Iri, IriOrObject, JsonObject, NonEmptyString},
+    common::{DatasetType, Iri, JsonObject, NonEmptyString},
     record::RecordSet,
     resource::Resource,
     serde::one_or_many,
@@ -30,15 +30,12 @@ pub struct Dataset {
 
     pub description: NonEmptyString,
 
-    #[serde(deserialize_with = "one_or_many")]
-    #[setting(validate = schematic::validate::min_length(1))]
-    pub license: Vec<IriOrObject>,
+    pub license: StringOrUrl,
 
     #[setting(validate = schematic::validate::url)]
-    pub url: String,
+    pub url: Option<String>,
 
-    #[serde(deserialize_with = "one_or_many")]
-    pub creator: Vec<Agent>,
+    pub creator: Agent,
 
     pub date_published: NaiveDate,
 
@@ -66,7 +63,7 @@ pub struct Dataset {
     pub same_as: Vec<Iri>,
 
     #[serde(default, deserialize_with = "one_or_many")]
-    pub sd_license: Vec<IriOrObject>,
+    pub sd_license: Vec<StringOrUrl>,
 
     #[serde(default, deserialize_with = "one_or_many")]
     pub in_language: Vec<Language>,
@@ -74,6 +71,9 @@ pub struct Dataset {
     pub is_live_dataset: Option<bool>,
 
     pub cite_as: Option<NonEmptyString>,
+
+    #[serde(default)]
+    pub alternate_name: Vec<String>,
 
     #[serde(flatten, default)]
     pub extra: JsonObject,
@@ -104,4 +104,12 @@ pub enum Keyword {
 pub enum Language {
     Text(NonEmptyString),
     Object(JsonObject),
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Config)]
+#[serde(untagged)]
+pub enum StringOrUrl {
+    String(NonEmptyString),
+    #[setting(validate = schematic::validate::url)]
+    Url(String),
 }

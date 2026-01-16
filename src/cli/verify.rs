@@ -2,7 +2,7 @@ use schematic::ConfigLoader;
 
 use crate::cli::{Input, VerifyCommand};
 
-pub fn verify(command: VerifyCommand) -> Result<(), schematic::ConfigError> {
+pub fn verify(command: VerifyCommand) -> miette::Result<()> {
     match command.args.input {
         Input::Stdin => Ok(()),
         Input::Path(path) => {

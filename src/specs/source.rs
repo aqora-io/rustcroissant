@@ -30,7 +30,7 @@ pub struct DataSource {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Config)]
-#[serde(untagged)]
+#[serde(rename_all = "camelCase")]
 pub enum SourceRef {
     FileObject(Ref),
     FileSet(Ref),
@@ -38,7 +38,7 @@ pub enum SourceRef {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Config)]
-#[serde(untagged)]
+#[serde(rename_all = "camelCase")]
 pub enum Extract {
     Column(NonEmptyString),
     FileProperty(FileProperty),
@@ -49,17 +49,21 @@ pub enum Extract {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ConfigEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum FileProperty {
+    #[serde(alias = "fullpath")]
     FullPath,
-    FileName,
+    #[serde(alias = "filename")]
+    FilenName,
     Content,
     Lines,
+    #[serde(alias = "linenumbers")]
     LineNumbers,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Config)]
-#[serde(untagged)]
+#[serde(rename_all = "camelCase")]
 pub enum Transform {
     Delimiter(char),
     Regex(RegexSetting),
-    JsonQuery(NonEmptyString),
+    #[serde(alias = "jsonQuery")]
+    JsonPath(NonEmptyString),
 }
