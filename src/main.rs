@@ -11,5 +11,6 @@ fn main() -> miette::Result<()> {
     match args.command {
         // TODO: manage this result
         cli::Command::Verify(verify) => cli::verify(verify),
+        cli::Command::Generate(generate) => cli::generate(generate),
     }
 }

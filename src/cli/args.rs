@@ -21,12 +21,20 @@ pub enum Command {
     /// Verify a json+ld croissant file
     #[command(visible_alias = "v")]
     Verify(VerifyCommand),
+    #[command(visible_alias = "g")]
+    Generate(GenerateCommand),
 }
 
 #[derive(Debug, Clone, Parser)]
 pub struct VerifyCommand {
     #[clap(flatten)]
     pub args: VerifyArgs,
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct GenerateCommand {
+    #[clap(flatten)]
+    pub args: GenerateArgs,
 }
 
 /// Arguments for Verify.
@@ -37,17 +45,40 @@ pub struct VerifyArgs {
     pub input: Input,
 }
 
+/// Arguments for Generate.
+#[derive(Debug, Clone, Args)]
+pub struct GenerateArgs {
+    /// Path to output the croissant file schema. Use `-` to write to stdout.
+    #[clap(value_parser = output_value_parser(), value_hint = ValueHint::FilePath)]
+    pub output: Output,
+}
+
 #[derive(Debug, Clone)]
 pub enum Input {
     Stdin,
     Path(PathBuf),
 }
 
+#[derive(Debug, Clone)]
+pub enum Output {
+    Stdout,
+    Path(PathBuf),
+}
+
 impl Display for Input {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Input::Stdin => f.pad("stdin"),
-            Input::Path(path) => path.display().fmt(f),
+            Self::Stdin => f.pad("stdin"),
+            Self::Path(path) => path.display().fmt(f),
+        }
+    }
+}
+
+impl Display for Output {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Stdout => f.pad("stdout"),
+            Self::Path(path) => path.display().fmt(f),
         }
     }
 }
@@ -60,6 +91,18 @@ fn input_value_parser() -> impl TypedValueParser<Value = Input> {
             Ok(Input::Stdin)
         } else {
             Ok(Input::Path(value.into()))
+        }
+    })
+}
+
+fn output_value_parser() -> impl TypedValueParser<Value = Output> {
+    clap::builder::OsStringValueParser::new().try_map(|value| {
+        if value.is_empty() {
+            Err(clap::Error::new(clap::error::ErrorKind::InvalidValue))
+        } else if value == "-" {
+            Ok(Output::Stdout)
+        } else {
+            Ok(Output::Path(value.into()))
         }
     })
 }
