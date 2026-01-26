@@ -42,9 +42,9 @@ sha2 = "0.10"
 tempfile = "3"
 thiserror = "2"
 url = { version = "2.5.7", features = ["serde"] }
-arrow-schema = { version = "57", optional = true }
-arrow-array = { version = "57", optional = true }
-parquet = { version = "57", optional = true }
+arrow-schema = { version = "56", optional = true }
+arrow-array = { version = "56", optional = true }
+parquet = { version = "56", optional = true }
 bytes = "1.11.0"
 
 

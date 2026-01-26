@@ -5,6 +5,7 @@ use crate::specs::{
     record::{Field, FieldType, RecordSet, RecordSetType},
 };
 use arrow_schema::{DataType as ArrowType, Field as ArrowField, Schema};
+use parquet::arrow::arrow_reader::ArrowReaderMetadata;
 
 impl From<&ArrowType> for DataType {
     fn from(dt: &ArrowType) -> Self {
@@ -76,4 +77,8 @@ impl From<(&Schema, &str)> for RecordSet {
             extra: Default::default(),
         }
     }
+}
+
+pub fn to_record_set(metadata: &ArrowReaderMetadata, name: &str) -> RecordSet {
+    RecordSet::from((metadata.schema().as_ref(), name))
 }
