@@ -11,7 +11,10 @@ mod serde;
 mod source;
 mod validate;
 
+pub use agent::*;
 pub use common::*;
 pub use data_type::*;
 pub use dataset::*;
 pub use record::*;
+pub use resource::*;
+pub use source::*;
