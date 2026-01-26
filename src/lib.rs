@@ -1,2 +1,2 @@
 mod cli;
-mod specs;
+pub mod specs;

@@ -3,7 +3,8 @@ use clap::Parser;
 use crate::cli::CliArguments;
 
 mod cli;
-mod specs;
+pub mod convert;
+pub mod specs;
 
 fn main() -> miette::Result<()> {
     let args = CliArguments::parse();

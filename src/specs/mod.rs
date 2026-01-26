@@ -1,12 +1,17 @@
 mod agent;
-mod common;
+pub(crate) mod common;
 mod context;
-mod data_type;
+pub(crate) mod data_type;
 mod dataset;
-mod record;
-mod resource;
+#[macro_use]
+mod macros;
+pub mod record;
+pub(crate) mod resource;
 mod serde;
 mod source;
 mod validate;
 
-pub(crate) use dataset::*;
+pub use common::*;
+pub use data_type::*;
+pub use dataset::*;
+pub use record::*;
