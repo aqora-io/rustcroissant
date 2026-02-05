@@ -1,44 +1,101 @@
 use schematic::{Config, ConfigEnum};
 
 crate::config_enum!(
+    /// The data type of values expected for a `Field` in a `RecordSet`.
+    ///
+    /// Specifying data types is crucial for data validation and downstream
+    /// processing, for example to enable ML frameworks to automatically
+    /// populate the correct data structures when loading datasets.
+    ///
+    /// Croissant supports two kinds of data types:
+    /// - Atomic data types, such as integers and strings
+    /// - Semantic data types, which convey additional meaning and may be
+    ///   structured
+    ///
+    /// Data types can be specified:
+    /// - On individual `Field`s, to constrain each field value
+    /// - On an entire `RecordSet`, to constrain each record and define
+    ///   mandatory fields
+    ///
+    /// This enum is inspired by the `Datatype` class in
+    /// [CSVW](https://csvw.org/).
     #[serde(untagged)]
     #[derive(Config)]
     pub enum DataType {
-        #[serde(rename = "sc:Enumeration")]
-        Enumeration,
+        /// Describes a boolean value.
         #[serde(rename = "sc:Boolean")]
         Boolean,
-        #[serde(rename = "sc:Integer")]
-        Integer,
-        #[serde(rename = "sc:Float")]
-        Float,
-        #[serde(rename = "sc:Text")]
-        Text,
+
+        /// Describes a date.
         #[serde(rename = "sc:Date")]
         Date,
+
+        /// Describes a combination of date and time of day.
         #[serde(rename = "sc:DateTime")]
         DateTime,
-        #[serde(rename = "sc:URL")]
-        Url,
-        #[serde(rename = "sc:Object")]
-        Object,
+
+        /// Describes a floating-point number.
+        #[serde(rename = "sc:Float")]
+        Float,
+
+        /// Describes an integer.
+        #[serde(rename = "sc:Integer")]
+        Integer,
+
+        /// Describes a string value.
+        #[serde(rename = "sc:Text")]
+        Text,
+
+        /// Describes the content of an image (pixels).
         #[serde(rename = "sc:ImageObject")]
         ImageObject,
+
+        /// Describes the coordinates of a bounding box represented as a
+        /// four-number array.
         #[serde(rename = "cr:BoundingBox")]
         BoundingBox(BoundingBoxFormat),
+
+        /// Describes a field containing the content of a video file.
+        #[serde(rename = "sc:VideoObject")]
+        VideoObject,
+
+        /// Describes a `RecordSet` used to split data according to
+        /// intended usage (e.g., training, validation, testing).
         #[serde(rename = "cr:Split")]
         Split,
+
+        /// Describes a categorical label, commonly used in ML datasets.
         #[serde(rename = "cr:Label")]
         Label,
+
+        #[serde(rename = "sc:Enumeration")]
+        Enumeration,
+
+        #[serde(rename = "sc:URL")]
+        Url,
+
+        #[serde(rename = "sc:Object")]
+        Object,
+
+        /// A custom data type identified by a URI or string.
         Custom(String),
     }
 );
 
 crate::config_enum!(
+    /// Supported formats for `cr:BoundingBox` values.
+    ///
+    /// Bounding boxes are represented as arrays of four numbers, whose
+    /// interpretation depends on the selected format.
     #[derive(ConfigEnum)]
     pub enum BoundingBoxFormat {
+        /// Center-based format: (center_x, center_y, width, height).    
         CenterXywh,
+
+        /// Top-left based format: (x, y, width, height).
         Xywh,
+
+        /// Corner-based format: (x_min, y_min, x_max, y_max).
         Xyxy,
     }
 );

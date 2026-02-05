@@ -15,28 +15,55 @@ config_struct!(
         #[serde(rename = "@id")]
         pub id: Id,
 
+        /// The source of data for the `FileSet`, e.g., an archive. If a
+        /// `FileSet` or multiple values are provided for `containedIn`, then
+        /// the union of their contents is taken (e.g., this can be used to
+        /// combine files from multiple archives). A `DataSource` can also be
+        /// used in case the data needs to be filtered or transformed.
+        #[serde(skip_serializing_if = "Vec::is_empty", default)]
+        #[setting(validate = schematic::validate::min_length(1))]
+        pub field: Vec<Field>,
+
+        /// One or more fields whose values uniquely identify each record in
+        /// the `RecordSet`. (See example below.)
+        #[serde(
+            skip_serializing_if = "Vec::is_empty",
+            default,
+            deserialize_with = "one_or_many"
+        )]
+        pub key: Vec<Ref>,
+
+        /// One or more records that constitute the data of the `RecordSet`.
+        #[serde(
+            skip_serializing_if = "Vec::is_empty",
+            default,
+            deserialize_with = "one_or_many"
+        )]
+        pub data: Vec<JsonObject>,
+
+        /// One or more records provided as example content of the `RecordSet`,
+        /// or a reference to data source that contains examples.
+        #[serde(
+            skip_serializing_if = "Vec::is_empty",
+            default,
+            deserialize_with = "one_or_many"
+        )]
+        pub examples: Vec<RecordSetExample>,
+
+        /// One or more data-level annotations that apply to the entire record.
+        #[serde(
+            skip_serializing_if = "Vec::is_empty",
+            default,
+            deserialize_with = "one_or_many"
+        )]
+        pub annotation: Vec<Field>,
+
         pub name: Option<NonEmptyString>,
 
         pub description: Option<NonEmptyString>,
 
         #[serde(default, deserialize_with = "one_or_many")]
         pub data_type: Vec<DataType>,
-
-        #[serde(default, deserialize_with = "one_or_many")]
-        pub key: Vec<Ref>,
-
-        #[serde(default)]
-        #[setting(validate = schematic::validate::min_length(1))]
-        pub field: Vec<Field>,
-
-        #[serde(default)]
-        pub data: Option<Vec<JsonObject>>,
-
-        #[serde(default)]
-        pub examples: Option<RecordSetExamples>,
-
-        #[serde(flatten, default)]
-        pub extra: JsonObject,
     }
 );
 
@@ -52,11 +79,10 @@ config_unit_enum!(
 config_enum!(
     #[derive(Config)]
     #[serde(untagged)]
-    pub enum RecordSetExamples {
-        Inline(Vec<JsonObject>),
+    pub enum RecordSetExample {
+        Inline(JsonObject),
         Source(Source),
-        #[setting(validate = schematic::validate::url)]
-        Url(String),
+        Url(url::Url),
     }
 );
 
@@ -69,32 +95,84 @@ config_struct!(
         #[serde(rename = "@id")]
         pub id: Id,
 
+        /// The data source of the field. This will generally reference a
+        /// `FileObject` or `FileSet`'s contents (e.g., a specific column of a
+        /// table).
+        #[serde(default)]
+        pub source: Option<Source>,
+
+        /// The data type of the field, identified by the URI of the
+        /// corresponding class. It could be either an atomic type (e.g.,
+        /// `sc:Integer`) or a semantic type (e.g., `sc:GeoLocation`).
+        #[serde(default, deserialize_with = "one_or_many")]
+        pub data_type: Vec<DataType>,
+
+        /// An optional constant value for the field. Fields with values can be
+        /// used to attach key/value pairs to a RecordSet. The value of a field
+        /// can be atomic, for fields with a simple dataType, or it can be
+        /// structured, e.g., if the field has subfields. For the latter case, a
+        /// JSON string can be used to represent the value.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub value: Option<JsonObject>,
+
+        /// If true, then the Field is an array of values of type dataType. If
+        /// `arrayShape` is not specified, it will default to `(-1,)`, i.e. a
+        /// one-dimensional array of unknown shape.
+        #[setting(default = false)]
+        pub is_array: bool,
+
+        /// The shape of the array as a comma-separated string. `-1` indicates
+        /// dimensions of unknown/unspecified size. `(-1,)` represents a simple
+        /// list. If specified, then `is_array` must be True.
+        #[setting(default = vec![-1])]
+        pub array_shape: Option<Vec<i64>>,
+
+        /// A property that is equivalent to this Field. Used in the case a
+        /// dataType is specified on the RecordSet to map specific fields to
+        /// specific properties associated with that dataType.
+        #[serde(
+            default,
+            skip_serializing_if = "Vec::is_empty",
+            deserialize_with = "one_or_many"
+        )]
+        pub equivalent_property: Vec<Iri>,
+
+        /// Another `Field` of another `RecordSet` that this field references.
+        /// This is the equivalent of a foreign key reference in a
+        /// relational database.
+        #[serde(
+            default,
+            skip_serializing_if = "Vec::is_empty",
+            deserialize_with = "one_or_many"
+        )]
+        pub references: Vec<FieldRef>,
+
+        /// Another `Field` that is nested inside this one.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        pub sub_field: Vec<Field>,
+
+        /// A special case of `SubField` that should be hidden because it references
+        /// a `Field` that already appears in the `RecordSet`.
+        #[serde(
+            default,
+            skip_serializing_if = "Vec::is_empty",
+            deserialize_with = "one_or_many"
+        )]
+        pub parent_field: Vec<ParentField>,
+
+        /// One or more data-level annotations that apply to the entire record.
+        #[serde(
+            skip_serializing_if = "Vec::is_empty",
+            default,
+            deserialize_with = "one_or_many"
+        )]
+        pub annotation: Vec<Field>,
+
         pub name: Option<NonEmptyString>,
 
         pub description: Option<NonEmptyString>,
 
-        #[serde(default, deserialize_with = "one_or_many")]
-        pub data_type: Vec<DataType>,
-
-        #[serde(default)]
-        pub source: Option<Source>,
-
         pub repeated: Option<bool>,
-
-        #[serde(default, deserialize_with = "one_or_many")]
-        pub equivalent_property: Vec<Iri>,
-
-        #[serde(default, deserialize_with = "one_or_many")]
-        pub references: Vec<FieldRef>,
-
-        #[serde(default)]
-        pub sub_field: Vec<Field>,
-
-        #[serde(default, deserialize_with = "one_or_many")]
-        pub parent_field: Vec<ParentField>,
-
-        #[serde(flatten, default)]
-        pub extra: JsonObject,
     }
 );
 
@@ -137,8 +215,5 @@ config_struct!(
 
         #[serde(default, deserialize_with = "one_or_many")]
         pub references: Vec<Ref>,
-
-        #[serde(flatten, default)]
-        pub extra: JsonObject,
     }
 );

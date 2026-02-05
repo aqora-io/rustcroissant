@@ -1,4 +1,4 @@
-use crate::specs::common::{Id, JsonObject, NonEmptyString};
+use crate::specs::common::{Id, NonEmptyString};
 use schematic::Config;
 
 crate::config_struct!(
@@ -12,10 +12,6 @@ crate::config_struct!(
 
         pub name: Option<NonEmptyString>,
 
-        #[setting(validate = schematic::validate::url)]
-        pub url: Option<String>,
-
-        #[serde(flatten, default)]
-        pub extra: JsonObject,
+        pub url: Option<url::Url>,
     }
 );

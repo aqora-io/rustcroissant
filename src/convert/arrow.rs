@@ -1,6 +1,5 @@
 #![cfg(feature = "arrow")]
 use crate::specs::{
-    common::NonEmptyString,
     data_type::DataType,
     record::{Field, FieldType, RecordSet, RecordSetType},
 };
@@ -8,8 +7,8 @@ use arrow_schema::{DataType as ArrowType, Field as ArrowField, Schema};
 use parquet::arrow::arrow_reader::ArrowReaderMetadata;
 
 impl From<&ArrowType> for DataType {
-    fn from(dt: &ArrowType) -> Self {
-        match dt {
+    fn from(data_type: &ArrowType) -> Self {
+        match data_type {
             ArrowType::Boolean => DataType::Boolean,
             ArrowType::Int8
             | ArrowType::Int16
@@ -34,17 +33,11 @@ impl From<&ArrowField> for Field {
     fn from(field: &ArrowField) -> Self {
         let mut out = Field {
             r#type: FieldType::Field,
-            id: NonEmptyString(format!("#field-{}", field.name()).to_string()),
-            name: Some(NonEmptyString(field.name().to_owned())),
-            description: None,
+            id: field.name().to_owned().into(),
+            name: Some(field.name().to_owned().into()),
             data_type: vec![DataType::from(field.data_type())],
-            source: None,
             repeated: Some(matches!(field.data_type(), ArrowType::List(_))),
-            equivalent_property: vec![],
-            references: vec![],
-            sub_field: vec![],
-            parent_field: vec![],
-            extra: Default::default(),
+            ..Default::default()
         };
 
         if let ArrowType::Struct(fields) = field.data_type() {
@@ -62,19 +55,15 @@ impl From<(&Schema, &str)> for RecordSet {
     fn from((schema, name): (&Schema, &str)) -> Self {
         RecordSet {
             r#type: RecordSetType::RecordSet,
-            id: NonEmptyString("#recordset-main".to_string()),
-            name: Some(NonEmptyString(name.to_owned())),
-            description: None,
-            data_type: vec![],
-            key: vec![],
+            id: "#recordset-main".into(),
+            name: Some(name.into()),
+
             field: schema
                 .fields()
                 .iter()
                 .map(|field| Field::from(field.as_ref()))
                 .collect(),
-            data: None,
-            examples: None,
-            extra: Default::default(),
+            ..Default::default()
         }
     }
 }

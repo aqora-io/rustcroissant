@@ -31,7 +31,6 @@ schematic = { version = "0.19", features = [
   "renderer_json_schema",
   "json",
   "type_chrono",
-  "validate_url",
   "type_semver",
   "type_relative_path",
 ] }

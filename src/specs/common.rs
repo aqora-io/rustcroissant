@@ -22,8 +22,46 @@ pub type JsonObject = BTreeMap<String, JsonValue>;
 crate::config_struct!(
     #[serde(transparent)]
     #[derive(Config, Hash)]
-    pub struct NonEmptyString(#[setting(validate = schematic::validate::not_empty)] pub String);
+    pub struct NonEmptyString(#[setting(validate = schematic::validate::not_empty)] String);
 );
+
+impl NonEmptyString {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(value.into())
+    }
+}
+
+impl std::ops::Deref for NonEmptyString {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for NonEmptyString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl AsRef<str> for NonEmptyString {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<String> for NonEmptyString {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+impl From<&str> for NonEmptyString {
+    fn from(value: &str) -> Self {
+        Self(value.into())
+    }
+}
 
 pub type Id = NonEmptyString;
 pub type Iri = NonEmptyString;
@@ -49,9 +87,8 @@ crate::config_enum!(
     #[derive(Config)]
     #[serde(untagged)]
     pub enum UrlOrRelativePath {
-        #[setting(validate = schematic::validate::url)]
-        Url(String),
-        Path(RelativePathBuf),
+        Url(Option<url::Url>),
+        Path(Option<RelativePathBuf>),
     }
 );
 
