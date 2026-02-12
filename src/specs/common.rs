@@ -22,7 +22,7 @@ pub type JsonObject = BTreeMap<String, JsonValue>;
 crate::config_struct!(
     #[serde(transparent)]
     #[derive(Config, Hash)]
-    pub struct NonEmptyString(#[setting(validate = schematic::validate::not_empty)] String);
+    pub struct NonEmptyString(#[setting(validate = schematic::validate::not_empty)] pub String);
 );
 
 impl NonEmptyString {

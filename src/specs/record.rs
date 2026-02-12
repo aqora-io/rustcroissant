@@ -119,7 +119,7 @@ config_struct!(
         /// `arrayShape` is not specified, it will default to `(-1,)`, i.e. a
         /// one-dimensional array of unknown shape.
         #[setting(default = false)]
-        pub is_array: bool,
+        pub is_array: Option<bool>,
 
         /// The shape of the array as a comma-separated string. `-1` indicates
         /// dimensions of unknown/unspecified size. `(-1,)` represents a simple

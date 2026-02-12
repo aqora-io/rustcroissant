@@ -25,7 +25,7 @@ miette = { version = "7.6.0", features = ["fancy"] }
 path-clean = "1"
 rand = "0.9.1"
 relative-path = { version = "2.0.1", features = ["serde"] }
-schematic = { version = "0.19", features = [
+schematic = { git = "https://github.com/aqora-io/schematic.git", features = [
   "type_regex",
   "type_url",
   "renderer_json_schema",
@@ -50,3 +50,6 @@ bytes = "1.11.0"
 [features]
 default = []
 arrow = ["dep:arrow-schema", "dep:arrow-array"]
+
+[dev-dependencies]
+proptest = "1.10.0"

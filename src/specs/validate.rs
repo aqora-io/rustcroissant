@@ -1,8 +1,9 @@
+use schematic::{Config, ValidateError, ValidateResult};
+use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, ops::Deref};
 
-use schematic::{ValidateError, ValidateResult};
-
 use crate::specs::{
+    NonEmptyString, OneOrMany, StringOrUrl,
     dataset::{Context as CroissantContext, PartialDataset},
     record::{Field, ParentField, RecordSet},
     resource::Resource,
@@ -10,11 +11,13 @@ use crate::specs::{
 };
 
 pub fn validate_distribution(
-    value: &Vec<Resource>,
+    value: &crate::specs::OneOrMany<Resource>,
     _partial: &PartialDataset,
     _context: &CroissantContext,
     _finalize: bool,
 ) -> ValidateResult {
+    let value = value.as_slice();
+
     let mut ids = HashSet::<String>::new();
 
     for res in value {
@@ -58,12 +61,39 @@ pub fn validate_distribution(
     Ok(())
 }
 
+#[derive(Debug, Clone, PartialEq, Config, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum LicenseInput {
+    One(StringOrUrl),
+    Many(Vec<StringOrUrl>),
+}
+
+pub fn validate_bibtex(
+    value: &NonEmptyString,
+    _partial: &PartialDataset,
+    _context: &CroissantContext,
+    _finalize: bool,
+) -> ValidateResult {
+    match biblatex::Bibliography::parse(value.as_ref()) {
+        Err(err) => Err(ValidateError::with_segments(
+            err.kind.to_string(),
+            vec![
+                schematic::PathSegment::Index(err.span.start),
+                schematic::PathSegment::Index(err.span.end),
+            ],
+        )),
+        Ok(_) => Ok(()),
+    }
+}
+
 pub fn validate_record_sets(
-    value: &Vec<RecordSet>,
+    value: &OneOrMany<RecordSet>,
     partial: &PartialDataset,
     _context: &CroissantContext,
     _finalize: bool,
 ) -> ValidateResult {
+    let value = value.as_slice();
+
     let dist_ids: HashSet<String> = partial
         .distribution
         .as_ref()
@@ -102,7 +132,7 @@ pub fn validate_record_sets(
         }
 
         for f in &rs.field {
-            validate_field(dist_ids.clone(), &rs_ids, &field_ids, rs, f)?;
+            validate_field(dist_ids.clone(), &rs_ids, &field_ids, &rs, f)?;
         }
     }
 
