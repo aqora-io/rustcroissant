@@ -3,6 +3,7 @@ name = "rustcroissant"
 version = "0.0.0"
 edition = "2024"
 readme = "README.md"
+license = "MIT OR Apache-2.0"
 
 [lib]
 name = "rustcroissant"
