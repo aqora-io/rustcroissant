@@ -38,8 +38,15 @@ impl From<&ArrowField> for Field {
             r#type: FieldType::Field,
             id: field.name().to_owned().into(),
             name: Some(field.name().to_owned().into()),
-            data_type: vec![DataType::from(field.data_type())],
-            repeated: Some(matches!(field.data_type(), ArrowType::List(_))),
+            data_type: crate::specs::OneOrMany::One(DataType::from(field.data_type())),
+            repeated: Some(matches!(
+                field.data_type(),
+                ArrowType::List(_)
+                    | ArrowType::ListView(_)
+                    | ArrowType::FixedSizeList(_, _)
+                    | ArrowType::LargeList(_)
+                    | ArrowType::LargeListView(_)
+            )),
             ..Default::default()
         };
 

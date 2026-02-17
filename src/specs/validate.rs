@@ -1,71 +1,80 @@
-use schematic::{Config, ValidateError, ValidateResult};
-use serde::{Deserialize, Serialize};
+use schematic::{ValidateError, ValidateResult};
 use std::{collections::HashSet, ops::Deref};
 
 use crate::specs::{
-    NonEmptyString, OneOrMany, StringOrUrl,
+    NonEmptyString, OneOrMany,
     dataset::{Context as CroissantContext, PartialDataset},
     record::{Field, ParentField, RecordSet},
     resource::Resource,
     source::{Source, SourceRef},
 };
 
+fn check_duplicate(set: &mut HashSet<String>, id: &str, what: &str) -> ValidateResult {
+    if !set.insert(id.to_string()) {
+        return Err(ValidateError::new(format!("duplicate {what} @id '{id}'")));
+    }
+    Ok(())
+}
+
+fn check_exists(set: &HashSet<String>, id: &str, message: String) -> ValidateResult {
+    if !set.contains(id) {
+        return Err(ValidateError::new(message));
+    }
+    Ok(())
+}
+
+fn validate_one_or_many<T>(
+    value: &OneOrMany<T>,
+    mut f: impl FnMut(&T) -> ValidateResult,
+) -> ValidateResult {
+    match value {
+        OneOrMany::One(value) => f(value),
+        OneOrMany::Many(values) => {
+            for value in values {
+                f(value)?;
+            }
+            Ok(())
+        }
+    }
+}
+
 pub fn validate_distribution(
-    value: &crate::specs::OneOrMany<Resource>,
+    value: &OneOrMany<Resource>,
     _partial: &PartialDataset,
     _context: &CroissantContext,
     _finalize: bool,
 ) -> ValidateResult {
-    let value = value.as_slice();
+    let resources = value.as_slice();
+    let mut ids = HashSet::new();
 
-    let mut ids = HashSet::<String>::new();
-
-    for res in value {
-        let id = res.id().deref();
-        if !ids.insert(id.to_owned()) {
-            return Err(ValidateError::new(format!(
-                "duplicate distribution @id '{}'",
-                id
-            )));
-        }
+    for resource in resources {
+        check_duplicate(&mut ids, resource.id().deref(), "distribution")?;
     }
 
-    let idset: HashSet<String> = value.iter().map(|r| r.id().deref().to_owned()).collect();
-    for res in value {
-        match res {
-            Resource::FileObject(o) => {
-                for c in &o.contained_in {
-                    if !idset.contains(&c.id.deref().to_owned()) {
-                        return Err(ValidateError::new(format!(
-                            "FileObject '{}' containedIn references missing id '{}'",
-                            o.id.deref().to_owned(),
-                            c.id.deref().to_owned()
-                        )));
-                    }
-                }
-            }
-            Resource::FileSet(s) => {
-                for c in &s.contained_in {
-                    if !idset.contains(&c.id.deref().to_owned()) {
-                        return Err(ValidateError::new(format!(
-                            "FileSet '{}' containedIn references missing id '{}'",
-                            s.id.to_owned().deref(),
-                            c.id.deref().to_owned()
-                        )));
-                    }
-                }
-            }
-        }
+    for resource in resources {
+        let contained = match resource {
+            Resource::FileObject(file_object) => &file_object.contained_in,
+            Resource::FileSet(file_set) => &file_set.contained_in,
+        };
+
+        validate_one_or_many(contained, |contain| {
+            check_exists(
+                &ids,
+                contain.id.deref(),
+                format!(
+                    "{} '{}' containedIn references missing id '{}'",
+                    match resource {
+                        Resource::FileObject(_) => "FileObject",
+                        Resource::FileSet(_) => "FileSet",
+                    },
+                    resource.id().deref(),
+                    contain.id.deref()
+                ),
+            )
+        })?;
     }
 
     Ok(())
-}
-
-#[derive(Debug, Clone, PartialEq, Config, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum LicenseInput {
-    One(StringOrUrl),
-    Many(Vec<StringOrUrl>),
 }
 
 pub fn validate_bibtex(
@@ -92,47 +101,45 @@ pub fn validate_record_sets(
     _context: &CroissantContext,
     _finalize: bool,
 ) -> ValidateResult {
-    let value = value.as_slice();
+    let record_sets = value.as_slice();
 
     let dist_ids: HashSet<String> = partial
         .distribution
         .as_ref()
-        .map(|v| v.iter().map(|r| r.id().deref().to_owned()).collect())
+        .map(|v| v.iter().map(|r| r.id().deref().to_string()).collect())
         .unwrap_or_default();
 
-    let mut rs_ids = HashSet::<String>::new();
-    for rs in value {
-        if !rs_ids.insert(rs.id.deref().to_owned()) {
-            return Err(ValidateError::new(format!(
-                "duplicate RecordSet @id '{}'",
-                rs.id.deref().to_owned()
-            )));
-        }
+    let mut record_set_ids = HashSet::new();
+    for record_set in record_sets {
+        check_duplicate(&mut record_set_ids, record_set.id.deref(), "RecordSet")?;
     }
 
-    let mut field_ids = HashSet::<String>::new();
-    for rs in value {
-        collect_field_ids(&rs.field, &mut field_ids)?;
-        for f in &rs.field {
+    let mut field_ids = HashSet::new();
+    for record_set in record_sets {
+        collect_field_ids(&record_set.field, &mut field_ids)?;
+        for f in &record_set.field {
             collect_parent_field_ids(f, &mut field_ids)?;
         }
     }
 
-    for rs in value {
-        for k in &rs.key {
-            if !field_ids.contains(&k.id.deref().to_owned())
-                && !field_ids.contains(&format!("{}/{}", rs.id.to_owned(), k.id.to_owned()))
+    for record_set in record_sets {
+        validate_one_or_many(&record_set.key, |key| {
+            let id = key.id.deref();
+            if field_ids.contains(id)
+                || field_ids.contains(&format!("{}/{}", record_set.id.deref(), id))
             {
-                return Err(ValidateError::new(format!(
+                Ok(())
+            } else {
+                Err(ValidateError::new(format!(
                     "RecordSet '{}' key references missing Field id '{}'",
-                    rs.id.to_owned(),
-                    k.id.to_owned()
-                )));
+                    record_set.id.deref(),
+                    id
+                )))
             }
-        }
+        })?;
 
-        for f in &rs.field {
-            validate_field(dist_ids.clone(), &rs_ids, &field_ids, &rs, f)?;
+        for field in &record_set.field {
+            validate_field(&dist_ids, &record_set_ids, &field_ids, record_set, field)?;
         }
     }
 
@@ -140,91 +147,87 @@ pub fn validate_record_sets(
 }
 
 fn collect_field_ids(fields: &[Field], out: &mut HashSet<String>) -> ValidateResult {
-    for f in fields {
-        if !out.insert(f.id.deref().to_owned()) {
-            return Err(ValidateError::new(format!(
-                "duplicate Field @id '{}'",
-                f.id.deref().to_owned()
-            )));
-        }
-        if !f.sub_field.is_empty() {
-            collect_field_ids(&f.sub_field, out)?;
-        }
+    for field in fields {
+        check_duplicate(out, field.id.deref(), "Field")?;
+        collect_field_ids(&field.sub_field, out)?;
     }
     Ok(())
 }
 
 fn collect_parent_field_ids(field: &Field, out: &mut HashSet<String>) -> ValidateResult {
-    for pf in &field.parent_field {
-        if let ParentField::Inline(inline) = pf {
-            if let Some(id) = &inline.id {
-                if !out.insert(id.deref().to_owned()) {
-                    return Err(ValidateError::new(format!(
-                        "duplicate Field @id '{}' (from parentField inline)",
-                        id.deref().to_owned()
-                    )));
-                }
-            }
+    validate_one_or_many(&field.parent_field, |pf| {
+        if let ParentField::Inline(inline) = pf
+            && let Some(id) = &inline.id
+        {
+            check_duplicate(out, id.deref(), "Field (from parentField inline)")?;
         }
+        Ok(())
+    })?;
+
+    for sub_field in &field.sub_field {
+        collect_parent_field_ids(sub_field, out)?;
     }
-    for sf in &field.sub_field {
-        collect_parent_field_ids(sf, out)?;
-    }
+
     Ok(())
 }
 
 fn validate_field(
-    dist_ids: HashSet<String>,
+    dist_ids: &HashSet<String>,
     rs_ids: &HashSet<String>,
     field_ids: &HashSet<String>,
     rs: &RecordSet,
-    f: &Field,
+    field: &Field,
 ) -> ValidateResult {
-    for r in &f.references {
-        if !field_ids.contains(&r.field.id.deref().to_owned()) {
-            return Err(ValidateError::new(format!(
+    validate_one_or_many(&field.references, |reference| {
+        check_exists(
+            field_ids,
+            reference.field.id.deref(),
+            format!(
                 "Field '{}' in RecordSet '{}' references missing Field id '{}'",
-                f.id.deref().to_owned(),
-                rs.id.deref().to_owned(),
-                r.field.id.deref().to_owned()
-            )));
-        }
-    }
+                field.id.deref(),
+                rs.id.deref(),
+                reference.field.id.deref()
+            ),
+        )
+    })?;
 
-    for pf in &f.parent_field {
-        match pf {
-            ParentField::Ref(r) => {
-                if !field_ids.contains(&r.id.deref().to_owned()) {
-                    return Err(ValidateError::new(format!(
-                        "Field '{}' parentField references missing Field id '{}'",
-                        f.id.deref().to_owned(),
-                        r.id.deref().to_owned()
-                    )));
-                }
+    validate_one_or_many(&field.parent_field, |parent_field| match parent_field {
+        ParentField::Ref(refe) => check_exists(
+            field_ids,
+            refe.id.deref(),
+            format!(
+                "Field '{}' parentField references missing Field id '{}'",
+                field.id.deref(),
+                refe.id.deref()
+            ),
+        ),
+        ParentField::Inline(inline) => {
+            validate_one_or_many(&inline.references, |reference| {
+                check_exists(
+                    field_ids,
+                    reference.id.deref(),
+                    format!(
+                        "Field '{}' parentField.inline references missing Field id '{}'",
+                        field.id.deref(),
+                        reference.id.deref()
+                    ),
+                )
+            })?;
+
+            if let Some(src) = &inline.source {
+                validate_source(dist_ids, rs_ids, src)?;
             }
-            ParentField::Inline(inline) => {
-                for r in &inline.references {
-                    if !field_ids.contains(&r.id.deref().to_owned()) {
-                        return Err(ValidateError::new(format!(
-                            "Field '{}' parentField.inline references missing Field id '{}'",
-                            f.id.deref().to_owned(),
-                            r.id.deref().to_owned()
-                        )));
-                    }
-                }
-                if let Some(src) = &inline.source {
-                    validate_source(&dist_ids, rs_ids, src)?;
-                }
-            }
+
+            Ok(())
         }
+    })?;
+
+    if let Some(source) = &field.source {
+        validate_source(dist_ids, rs_ids, source)?;
     }
 
-    if let Some(source) = &f.source {
-        validate_source(&dist_ids, rs_ids, source)?;
-    }
-
-    for sf in &f.sub_field {
-        validate_field(dist_ids.clone(), rs_ids, field_ids, rs, sf)?;
+    for sub_field in &field.sub_field {
+        validate_field(dist_ids, rs_ids, field_ids, rs, sub_field)?;
     }
 
     Ok(())
@@ -237,34 +240,31 @@ fn validate_source(
 ) -> ValidateResult {
     match source {
         Source::Ref(_) => Ok(()),
-        Source::DataSource(ds) => {
-            match &ds.source {
-                SourceRef::FileObject(file_object) => {
-                    if !dist_ids.contains(&file_object.id.deref().to_owned()) {
-                        return Err(ValidateError::new(format!(
-                            "DataSource fileObject references missing distribution id '{}'",
-                            file_object.id.deref().to_owned()
-                        )));
-                    }
-                }
-                SourceRef::FileSet(file_set) => {
-                    if !dist_ids.contains(&file_set.id.deref().to_owned()) {
-                        return Err(ValidateError::new(format!(
-                            "DataSource fileSet references missing distribution id '{}'",
-                            file_set.id.deref().to_owned()
-                        )));
-                    }
-                }
-                SourceRef::RecordSet(record_set) => {
-                    if !rs_ids.contains(&record_set.id.deref().to_owned()) {
-                        return Err(ValidateError::new(format!(
-                            "DataSource recordSet references missing RecordSet id '{}'",
-                            record_set.id.deref().to_owned()
-                        )));
-                    }
-                }
-            }
-            Ok(())
-        }
+        Source::DataSource(data_source) => match &data_source.source {
+            SourceRef::FileObject(file_object) => check_exists(
+                dist_ids,
+                file_object.id.deref(),
+                format!(
+                    "DataSource fileObject references missing distribution id '{}'",
+                    file_object.id.deref()
+                ),
+            ),
+            SourceRef::FileSet(file_set) => check_exists(
+                dist_ids,
+                file_set.id.deref(),
+                format!(
+                    "DataSource fileSet references missing distribution id '{}'",
+                    file_set.id.deref()
+                ),
+            ),
+            SourceRef::RecordSet(record_set) => check_exists(
+                rs_ids,
+                record_set.id.deref(),
+                format!(
+                    "DataSource recordSet references missing RecordSet id '{}'",
+                    record_set.id.deref()
+                ),
+            ),
+        },
     }
 }

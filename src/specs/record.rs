@@ -1,7 +1,6 @@
 use crate::specs::{
     common::{Id, Iri, JsonObject, NonEmptyString, Ref},
     data_type::DataType,
-    serde::one_or_many,
     source::Source,
 };
 use schematic::{Config, ConfigEnum};
@@ -26,44 +25,28 @@ config_struct!(
 
         /// One or more fields whose values uniquely identify each record in
         /// the `RecordSet`. (See example below.)
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        pub key: Vec<Ref>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub key: crate::specs::OneOrMany<Ref>,
 
         /// One or more records that constitute the data of the `RecordSet`.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        pub data: Vec<JsonObject>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub data: crate::specs::OneOrMany<JsonObject>,
 
         /// One or more records provided as example content of the `RecordSet`,
         /// or a reference to data source that contains examples.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        pub examples: Vec<RecordSetExample>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub examples: crate::specs::OneOrMany<RecordSetExample>,
 
         /// One or more data-level annotations that apply to the entire record.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        pub annotation: Vec<Field>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub annotation: crate::specs::OneOrMany<Field>,
 
         pub name: Option<NonEmptyString>,
 
         pub description: Option<NonEmptyString>,
 
-        #[serde(default, deserialize_with = "one_or_many")]
-        pub data_type: Vec<DataType>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub data_type: crate::specs::OneOrMany<DataType>,
     }
 );
 
@@ -104,8 +87,8 @@ config_struct!(
         /// The data type of the field, identified by the URI of the
         /// corresponding class. It could be either an atomic type (e.g.,
         /// `sc:Integer`) or a semantic type (e.g., `sc:GeoLocation`).
-        #[serde(default, deserialize_with = "one_or_many")]
-        pub data_type: Vec<DataType>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub data_type: crate::specs::OneOrMany<DataType>,
 
         /// An optional constant value for the field. Fields with values can be
         /// used to attach key/value pairs to a RecordSet. The value of a field
@@ -130,22 +113,14 @@ config_struct!(
         /// A property that is equivalent to this Field. Used in the case a
         /// dataType is specified on the RecordSet to map specific fields to
         /// specific properties associated with that dataType.
-        #[serde(
-            default,
-            skip_serializing_if = "Vec::is_empty",
-            deserialize_with = "one_or_many"
-        )]
-        pub equivalent_property: Vec<Iri>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub equivalent_property: crate::specs::OneOrMany<Iri>,
 
         /// Another `Field` of another `RecordSet` that this field references.
         /// This is the equivalent of a foreign key reference in a
         /// relational database.
-        #[serde(
-            default,
-            skip_serializing_if = "Vec::is_empty",
-            deserialize_with = "one_or_many"
-        )]
-        pub references: Vec<FieldRef>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub references: crate::specs::OneOrMany<FieldRef>,
 
         /// Another `Field` that is nested inside this one.
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -153,19 +128,11 @@ config_struct!(
 
         /// A special case of `SubField` that should be hidden because it references
         /// a `Field` that already appears in the `RecordSet`.
-        #[serde(
-            default,
-            skip_serializing_if = "Vec::is_empty",
-            deserialize_with = "one_or_many"
-        )]
-        pub parent_field: Vec<ParentField>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub parent_field: crate::specs::OneOrMany<ParentField>,
 
         /// One or more data-level annotations that apply to the entire record.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
+        #[serde(skip_serializing_if = "Vec::is_empty", default)]
         pub annotation: Vec<Field>,
 
         pub name: Option<NonEmptyString>,
@@ -213,7 +180,7 @@ config_struct!(
         #[serde(default)]
         pub source: Option<Source>,
 
-        #[serde(default, deserialize_with = "one_or_many")]
-        pub references: Vec<Ref>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub references: crate::specs::OneOrMany<Ref>,
     }
 );

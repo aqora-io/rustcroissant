@@ -1,7 +1,4 @@
-use crate::specs::{
-    common::{NonEmptyString, Ref},
-    serde::one_or_many,
-};
+use crate::specs::common::{NonEmptyString, Ref};
 use schematic::{Config, ConfigEnum, RegexSetting};
 
 config_enum!(
@@ -26,12 +23,8 @@ config_struct!(
         /// A transformation to apply on source data on top of the extracted
         /// method as specified through extract, e.g., a regular expression or
         /// a JSON path.
-        #[serde(
-            default,
-            skip_serializing_if = "Vec::is_empty",
-            deserialize_with = "one_or_many"
-        )]
-        pub transform: Vec<Transform>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub transform: crate::specs::OneOrMany<Transform>,
 
         /// A format string used to parse values coming from a `DataSource`.
         ///

@@ -7,7 +7,6 @@ mod dataset;
 mod macros;
 pub mod record;
 pub(crate) mod resource;
-mod serde;
 mod source;
 mod validate;
 

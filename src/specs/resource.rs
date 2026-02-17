@@ -1,7 +1,4 @@
-use crate::specs::{
-    common::{Id, Iri, NonEmptyString, Ref, UrlOrRelativePath},
-    serde::one_or_many,
-};
+use crate::specs::common::{Id, Iri, NonEmptyString, Ref, UrlOrRelativePath};
 use schematic::Config;
 
 config_enum!(
@@ -100,12 +97,8 @@ config_struct!(
 
         /// URL (or local name) of a FileObject with the same content, but in a
         /// different format.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        pub same_as: Vec<Iri>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub same_as: crate::specs::OneOrMany<Iri>,
 
         /// Checksum for the file contents.
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -116,12 +109,8 @@ config_struct!(
         /// is present, the `contentUrl` is evaluated as a relative path within
         /// the container object. A `DataSource` can also be used in case the data
         /// needs to be filtered or transformed.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        pub contained_in: Vec<Ref>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub contained_in: crate::specs::OneOrMany<Ref>,
 
         pub md5: Option<NonEmptyString>,
     }
@@ -149,30 +138,16 @@ config_struct!(
         /// is present, the `contentUrl` is evaluated as a relative path within
         /// the container object. A `DataSource` can also be used in case the data
         /// needs to be filtered or transformed.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        #[setting(validate = schematic::validate::min_length(1))]
-        pub contained_in: Vec<Ref>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub contained_in: crate::specs::OneOrMany<Ref>,
 
         /// A glob pattern that specifies the files to include.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        #[setting(validate = schematic::validate::min_length(1))]
-        pub includes: Vec<NonEmptyString>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub includes: crate::specs::OneOrMany<NonEmptyString>,
 
         /// A glob pattern that specifies the files to exclude.
-        #[serde(
-            skip_serializing_if = "Vec::is_empty",
-            default,
-            deserialize_with = "one_or_many"
-        )]
-        pub excludes: Vec<NonEmptyString>,
+        #[serde(skip_serializing_if = "crate::specs::OneOrMany::is_empty", default)]
+        pub excludes: crate::specs::OneOrMany<NonEmptyString>,
 
         /// A description of the item.
         pub description: Option<NonEmptyString>,
