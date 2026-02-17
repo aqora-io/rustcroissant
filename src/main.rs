@@ -2,10 +2,10 @@ use clap::Parser;
 
 use crate::cli::CliArguments;
 
-mod cli;
-#[cfg(feature = "arrow")]
-pub mod convert;
+pub mod cli;
 
+#[cfg(feature = "convert")]
+pub mod convert;
 pub mod specs;
 
 fn main() -> miette::Result<()> {

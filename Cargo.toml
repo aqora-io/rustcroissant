@@ -48,7 +48,8 @@ bytes = "1.11.0"
 
 
 [features]
-default = []
+default = ["convert"]
+convert = ["arrow"]
 arrow = ["dep:arrow-schema", "dep:arrow-array"]
 
 [dev-dependencies]

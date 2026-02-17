@@ -1,5 +1,3 @@
-mod cli;
-#[cfg(feature = "arrow")]
+#[cfg(feature = "convert")]
 pub mod convert;
-
 pub mod specs;

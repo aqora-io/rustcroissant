@@ -1,9 +1,12 @@
-#![cfg(feature = "arrow")]
-use crate::specs::{
-    data_type::DataType,
-    record::{Field, FieldType, RecordSet, RecordSetType},
+use crate::{
+    convert::converter::Converter,
+    specs::{
+        OneOrMany, RecordSet,
+        data_type::DataType,
+        record::{Field, FieldType},
+    },
 };
-use arrow_schema::{DataType as ArrowType, Field as ArrowField, Schema};
+use arrow_schema::{DataType as ArrowType, Field as ArrowField};
 use parquet::arrow::arrow_reader::ArrowReaderMetadata;
 
 impl From<&ArrowType> for DataType {
@@ -32,13 +35,46 @@ impl From<&ArrowType> for DataType {
     }
 }
 
-impl From<&ArrowField> for Field {
-    fn from(field: &ArrowField) -> Self {
-        let mut out = Field {
+pub struct ParquetTransformer<'a> {
+    pub metadata: &'a ArrowReaderMetadata,
+}
+
+impl<'a> ParquetTransformer<'a> {
+    pub fn new(metadata: &'a ArrowReaderMetadata) -> Self {
+        Self { metadata }
+    }
+}
+
+impl<'a> super::transformer::TransformerTrait for ParquetTransformer<'a> {
+    fn transform(&self, convert: &Converter) -> RecordSet {
+        let schema = self.metadata.schema();
+
+        let fields = schema
+            .fields()
+            .iter()
+            .map(|field| Self::to_croissant_field(field, convert))
+            .collect();
+
+        convert.build(fields)
+    }
+}
+
+impl<'a> ParquetTransformer<'a> {
+    fn to_croissant_field(field: &ArrowField, convert: &Converter) -> Field {
+        let sub_field = match field.data_type() {
+            ArrowType::Struct(fields) => fields
+                .iter()
+                .map(|field| Self::to_croissant_field(field, convert))
+                .collect(),
+            _ => Vec::new(),
+        };
+
+        Field {
             r#type: FieldType::Field,
             id: field.name().to_owned().into(),
             name: Some(field.name().to_owned().into()),
-            data_type: crate::specs::OneOrMany::One(DataType::from(field.data_type())),
+            data_type: OneOrMany::One(DataType::from(field.data_type())),
+            description: Some(format!("Column '{}' {}", field.name(), convert.suffix).into()),
             repeated: Some(matches!(
                 field.data_type(),
                 ArrowType::List(_)
@@ -47,37 +83,17 @@ impl From<&ArrowField> for Field {
                     | ArrowType::LargeList(_)
                     | ArrowType::LargeListView(_)
             )),
-            ..Default::default()
-        };
-
-        if let ArrowType::Struct(fields) = field.data_type() {
-            out.sub_field = fields
-                .iter()
-                .map(|field| Field::from(field.as_ref()))
-                .collect();
-        }
-
-        out
-    }
-}
-
-impl From<(&Schema, &str)> for RecordSet {
-    fn from((schema, name): (&Schema, &str)) -> Self {
-        RecordSet {
-            r#type: RecordSetType::RecordSet,
-            id: "#recordset-main".into(),
-            name: Some(name.into()),
-
-            field: schema
-                .fields()
-                .iter()
-                .map(|field| Field::from(field.as_ref()))
-                .collect(),
+            source: Some(crate::specs::Source::DataSource(crate::specs::DataSource {
+                source: crate::specs::SourceRef::FileObject(crate::specs::Ref {
+                    id: convert.source_id.clone().into(),
+                }),
+                extract: Some(crate::specs::Extract::Column(
+                    field.name().to_owned().into(),
+                )),
+                ..Default::default()
+            })),
+            sub_field,
             ..Default::default()
         }
     }
-}
-
-pub fn to_record_set(metadata: &ArrowReaderMetadata, name: &str) -> RecordSet {
-    RecordSet::from((metadata.schema().as_ref(), name))
 }
