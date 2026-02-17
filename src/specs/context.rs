@@ -128,6 +128,12 @@ crate::config_enum!(
     }
 );
 
+impl CrTerm {
+    pub fn default(&self) -> Self {
+        self.clone()
+    }
+}
+
 crate::config_struct!(
     #[derive(Config)]
     pub struct ContextObject {
@@ -158,27 +164,27 @@ crate::config_enum!(
 crate::config_struct!(
     #[derive(Config)]
     pub struct Context {
-        #[setting(default = || => CrTerm::Annotation)]
+        #[setting(default = CrTerm::default(&CrTerm::Annotation))]
         pub annotation: Option<CrTerm>,
-        #[setting(default = || => CrTerm::ArrayShape)]
+        #[setting(default = CrTerm::default(&CrTerm::ArrayShape) )]
         pub array_shape: Option<CrTerm>,
-        #[setting(default = || => CrTerm::CiteAs)]
+        #[setting(default = CrTerm::default(&CrTerm::CiteAs))]
         pub cite_as: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Column)]
+        #[setting(default = CrTerm::default(&CrTerm::Column))]
         pub column: Option<CrTerm>,
 
         #[setting(default = "dct:conformsTo")]
         pub conforms_to: String,
 
-        #[setting(default = || => CrTerm::ContainedIn)]
+        #[setting(default = CrTerm::default(&CrTerm::ContainedIn))]
         pub contained_in: Option<CrTerm>,
 
         #[setting(default = "http://mlcommons.org/croissant/")]
         pub cr: Option<url::Url>,
 
-        #[setting(default = || => CrTerm::DataBiases)]
+        #[setting(default = CrTerm::default(&CrTerm::DataBiases))]
         pub data_biases: Option<CrTerm>,
-        #[setting(default = || => CrTerm::DataCollection)]
+        #[setting(default = CrTerm::default(&CrTerm::DataCollection))]
         pub data_collection: Option<CrTerm>,
 
         #[setting(default = ContextObject::new(CrTerm::Data, ContextType::Json))]
@@ -190,81 +196,81 @@ crate::config_struct!(
         #[setting(default = "http://purl.org/dc/terms/")]
         pub dct: Option<url::Url>,
 
-        #[setting(default = || => CrTerm::EquivalentProperty)]
+        #[setting(default = CrTerm::default(&CrTerm::EquivalentProperty))]
         pub equivalent_property: Option<CrTerm>,
 
         #[setting(default = ContextObject::new(CrTerm::Examples, ContextType::Json))]
         pub examples: Option<ContextObject>,
 
-        #[setting(default = || => CrTerm::Examples)]
+        #[setting(default = CrTerm::default(&CrTerm::Examples))]
         pub excludes: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Extract)]
+        #[setting(default = CrTerm::default(&CrTerm::Extract))]
         pub extract: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Field)]
+        #[setting(default = CrTerm::default(&CrTerm::Field))]
         pub field: Option<CrTerm>,
-        #[setting(default = || => CrTerm::FileObject)]
+        #[setting(default = CrTerm::default(&CrTerm::FileObject))]
         pub file_object: Option<CrTerm>,
-        #[setting(default = || => CrTerm::FileProperty)]
+        #[setting(default = CrTerm::default(&CrTerm::FileProperty))]
         pub file_property: Option<CrTerm>,
-        #[setting(default = || => CrTerm::FileSet)]
+        #[setting(default = CrTerm::default(&CrTerm::FileSet))]
         pub file_set: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Format)]
+        #[setting(default = CrTerm::default(&CrTerm::Format))]
         pub format: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Includes)]
+        #[setting(default = CrTerm::default(&CrTerm::Includes))]
         pub includes: Option<CrTerm>,
-        #[setting(default = || => CrTerm::IsArray)]
+        #[setting(default = CrTerm::default(&CrTerm::IsArray))]
         pub is_array: Option<CrTerm>,
-        #[setting(default = || => CrTerm::IsLiveDataset)]
+        #[setting(default = CrTerm::default(&CrTerm::IsLiveDataset))]
         pub is_live_dataset: Option<CrTerm>,
-        #[setting(default = || => CrTerm::JsonPath)]
+        #[setting(default = CrTerm::default(&CrTerm::JsonPath))]
         pub json_path: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Key)]
+        #[setting(default = CrTerm::default(&CrTerm::Key))]
         pub key: Option<CrTerm>,
 
         #[serde(rename = "@language")]
         pub language: String,
 
-        #[setting(default = || => CrTerm::Md5)]
+        #[setting(default = CrTerm::default(&CrTerm::Md5))]
         pub md5: Option<CrTerm>,
-        #[setting(default = || => CrTerm::ParentField)]
+        #[setting(default = CrTerm::default(&CrTerm::ParentField))]
         pub parent_field: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Path)]
+        #[setting(default = CrTerm::default(&CrTerm::Path))]
         pub path: Option<CrTerm>,
-        #[setting(default = || => CrTerm::PersonalSensitiveInformation)]
+        #[setting(default = CrTerm::default(&CrTerm::PersonalSensitiveInformation))]
         pub personal_sensitive_information: Option<CrTerm>,
 
         #[setting(default = "http://mlcommons.org/croissant/RAI/")]
         pub rai: Option<url::Url>,
 
-        #[setting(default = || => CrTerm::ReadLines)]
+        #[setting(default = CrTerm::default(&CrTerm::ReadLines))]
         pub read_lines: Option<CrTerm>,
-        #[setting(default = || => CrTerm::RecordSet)]
+        #[setting(default = CrTerm::default(&CrTerm::RecordSet))]
         pub record_set: Option<CrTerm>,
-        #[setting(default = || => CrTerm::References)]
+        #[setting(default = CrTerm::default(&CrTerm::References))]
         pub references: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Regex)]
+        #[setting(default = CrTerm::default(&CrTerm::Regex))]
         pub regex: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Repeated)]
+        #[setting(default = CrTerm::default(&CrTerm::Repeated))]
         pub repeated: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Replace)]
+        #[setting(default = CrTerm::default(&CrTerm::Replace ))]
         pub replace: Option<CrTerm>,
 
         #[setting(default = "https://schema.org/")]
         pub sc: Option<url::Url>,
 
-        #[setting(default = || => CrTerm::SdVersion)]
+        #[setting(default = CrTerm::default(&CrTerm::SdVersion))]
         pub sd_version: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Separator)]
+        #[setting(default = CrTerm::default(&CrTerm::Separator))]
         pub separator: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Source)]
+        #[setting(default = CrTerm::default(&CrTerm::Source))]
         pub source: Option<CrTerm>,
-        #[setting(default = || => CrTerm::SubField)]
+        #[setting(default = CrTerm::default(&CrTerm::SubField))]
         pub sub_field: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Transform)]
+        #[setting(default = CrTerm::default(&CrTerm::Transform))]
         pub transform: Option<CrTerm>,
-        #[setting(default = || => CrTerm::UnArchive)]
+        #[setting(default = CrTerm::default(& CrTerm::UnArchive) ) ]
         pub un_archive: Option<CrTerm>,
-        #[setting(default = || => CrTerm::Value)]
+        #[setting(default = CrTerm::default(&CrTerm::Value))]
         pub value: Option<CrTerm>,
 
         #[serde(rename = "@vocab")]

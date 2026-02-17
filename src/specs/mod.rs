@@ -1,6 +1,6 @@
 mod agent;
 pub(crate) mod common;
-mod context;
+pub mod context;
 pub(crate) mod data_type;
 mod dataset;
 #[macro_use]
@@ -18,7 +18,7 @@ pub use data_type::*;
 pub use dataset::*;
 pub use record::*;
 pub use resource::*;
-use schematic::{Config, Schema, SchemaBuilder, Schematic, schema::UnionType};
+use schematic::{Schema, SchemaBuilder, Schematic, schema::UnionType};
 pub use source::*;
 use std::ops::Deref;
 
