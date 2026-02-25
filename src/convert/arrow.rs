@@ -69,11 +69,12 @@ impl<'a> ParquetTransformer<'a> {
             _ => Vec::new(),
         };
 
+        let field_name = format!("{}/{}", convert.source_id, field.name().to_owned());
         Field {
             r#type: FieldType::Field,
-            id: field.name().to_owned().into(),
-            name: Some(field.name().to_owned().into()),
-            data_type: OneOrMany::One(DataType::from(field.data_type())),
+            id: field_name.clone().into(),
+            name: Some(field_name.into()),
+            data_type: Some(OneOrMany::One(DataType::from(field.data_type()))),
             description: Some(format!("Column '{}' {}", field.name(), convert.suffix).into()),
             repeated: Some(matches!(
                 field.data_type(),
