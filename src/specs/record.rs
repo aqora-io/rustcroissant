@@ -45,8 +45,8 @@ config_struct!(
 
         pub description: Option<NonEmptyString>,
 
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub data_type: Option<crate::specs::OneOrMany<DataType>>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        pub data_type: Vec<DataType>,
     }
 );
 
@@ -87,8 +87,8 @@ config_struct!(
         /// The data type of the field, identified by the URI of the
         /// corresponding class. It could be either an atomic type (e.g.,
         /// `sc:Integer`) or a semantic type (e.g., `sc:GeoLocation`).
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub data_type: Option<crate::specs::OneOrMany<DataType>>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        pub data_type: Vec<DataType>,
 
         /// An optional constant value for the field. Fields with values can be
         /// used to attach key/value pairs to a RecordSet. The value of a field
@@ -101,13 +101,14 @@ config_struct!(
         /// If true, then the Field is an array of values of type dataType. If
         /// `arrayShape` is not specified, it will default to `(-1,)`, i.e. a
         /// one-dimensional array of unknown shape.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         #[setting(default = false)]
         pub is_array: Option<bool>,
 
         /// The shape of the array as a comma-separated string. `-1` indicates
         /// dimensions of unknown/unspecified size. `(-1,)` represents a simple
         /// list. If specified, then `is_array` must be True.
-        #[setting(default = vec!["-1".into()])]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         pub array_shape: Option<Vec<String>>,
 
         /// A property that is equivalent to this Field. Used in the case a
