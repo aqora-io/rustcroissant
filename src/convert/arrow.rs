@@ -1,7 +1,7 @@
 use crate::{
     convert::converter::Converter,
     specs::{
-        OneOrMany, RecordSet,
+        RecordSet,
         data_type::DataType,
         record::{Field, FieldType},
     },
@@ -74,8 +74,16 @@ impl<'a> ParquetTransformer<'a> {
             r#type: FieldType::Field,
             id: field_name.clone().into(),
             name: Some(field_name.into()),
-            data_type: vec![DataType::from(field.data_type())],
-            description: Some(format!("Column '{}' {}", field.name(), convert.suffix).into()),
+            data_type: vec![field.data_type().into()],
+            description: Some(
+                format!(
+                    "Column: '{}', type: '{}' {}",
+                    field.name(),
+                    field.data_type(),
+                    convert.suffix
+                )
+                .into(),
+            ),
             repeated: Some(matches!(
                 field.data_type(),
                 ArrowType::List(_)
