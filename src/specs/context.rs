@@ -228,6 +228,7 @@ crate::config_struct!(
         pub key: Option<CrTerm>,
 
         #[serde(rename = "@language")]
+        #[setting(default = "en")]
         pub language: String,
 
         #[setting(default = CrTerm::default(&CrTerm::Md5))]
