@@ -13,17 +13,15 @@ impl From<&ArrowType> for DataType {
     fn from(data_type: &ArrowType) -> Self {
         match data_type {
             ArrowType::Boolean => DataType::Boolean,
-            ArrowType::Int8 => DataType::Int8,
-            ArrowType::Int16 => DataType::Int16,
-            ArrowType::Int32 => DataType::Int32,
-            ArrowType::Int64 => DataType::Int64,
-            ArrowType::UInt8 => DataType::UInt8,
-            ArrowType::UInt16 => DataType::UInt16,
-            ArrowType::UInt32 => DataType::UInt32,
-            ArrowType::UInt64 => DataType::UInt64,
-            ArrowType::Float16 => DataType::Float16,
-            ArrowType::Float32 => DataType::Float32,
-            ArrowType::Float64 => DataType::Float64,
+            ArrowType::Int8
+            | ArrowType::Int16
+            | ArrowType::Int32
+            | ArrowType::Int64
+            | ArrowType::UInt8
+            | ArrowType::UInt16
+            | ArrowType::UInt32
+            | ArrowType::UInt64 => DataType::Integer,
+            ArrowType::Float16 | ArrowType::Float32 | ArrowType::Float64 => DataType::Float,
             ArrowType::Utf8 | ArrowType::LargeUtf8 => DataType::Text,
             ArrowType::Binary | ArrowType::LargeBinary => DataType::Text,
             ArrowType::Date32 | ArrowType::Date64 => DataType::Date,

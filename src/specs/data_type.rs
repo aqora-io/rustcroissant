@@ -37,57 +37,9 @@ crate::config_enum!(
         #[serde(rename = "sc:Float")]
         Float,
 
-        /// A 16-bit floating-point number
-        #[serde(rename = "sc:Float16")]
-        Float16,
-
-        /// A 32-bit floating-point number
-        #[serde(rename = "sc:Float32")]
-        Float32,
-
-        /// A 64-bit floating-point number
-        #[serde(rename = "sc:Float64")]
-        Float64,
-
         /// Describes an integer.
         #[serde(rename = "sc:Integer")]
         Integer,
-
-        /// Int number
-        #[serde(rename = "sc:Int")]
-        Int,
-
-        /// A 8-bit int number
-        #[serde(rename = "sc:Int8")]
-        Int8,
-
-        /// A 16-bit int number
-        #[serde(rename = "sc:Int16")]
-        Int16,
-
-        /// A 32-bit int number
-        #[serde(rename = "sc:Int32")]
-        Int32,
-
-        /// A 64-bit int number
-        #[serde(rename = "sc:Int64")]
-        Int64,
-
-        /// A 8-bit int unsigned  number
-        #[serde(rename = "sc:UInt8")]
-        UInt8,
-
-        /// A 16-bit int unsigned  number
-        #[serde(rename = "sc:UInt16")]
-        UInt16,
-
-        /// A 32-bit int unsigned  number
-        #[serde(rename = "sc:UInt32")]
-        UInt32,
-
-        /// A 64-bit int unsigned  number
-        #[serde(rename = "sc:UInt64")]
-        UInt64,
 
         /// Describes a string value.
         #[serde(rename = "sc:Text")]
