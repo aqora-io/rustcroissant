@@ -15,5 +15,6 @@ fn main() -> miette::Result<()> {
         // TODO: manage this result
         cli::Command::Verify(verify) => cli::verify(verify),
         cli::Command::Generate(generate) => cli::generate(generate),
+        cli::Command::Schema(schema) => cli::schema(schema),
     }
 }

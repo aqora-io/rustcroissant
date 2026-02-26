@@ -23,6 +23,8 @@ pub enum Command {
     Verify(VerifyCommand),
     #[command(visible_alias = "g")]
     Generate(GenerateCommand),
+    #[command(visible_alias = "s")]
+    Schema(SchemaCommand),
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -37,6 +39,12 @@ pub struct GenerateCommand {
     pub args: GenerateArgs,
 }
 
+#[derive(Debug, Clone, Parser)]
+pub struct SchemaCommand {
+    #[clap(flatten)]
+    pub args: SchemaArgs,
+}
+
 /// Arguments for Verify.
 #[derive(Debug, Clone, Args)]
 pub struct VerifyArgs {
@@ -48,6 +56,13 @@ pub struct VerifyArgs {
 /// Arguments for Generate.
 #[derive(Debug, Clone, Args)]
 pub struct GenerateArgs {
+    #[clap(value_parser = output_value_parser(), value_hint = ValueHint::FilePath)]
+    pub output: Output,
+}
+
+/// Arguments for Schema.
+#[derive(Debug, Clone, Args)]
+pub struct SchemaArgs {
     /// Path to output the croissant file schema. Use `-` to write to stdout.
     #[clap(value_parser = output_value_parser(), value_hint = ValueHint::FilePath)]
     pub output: Output,
