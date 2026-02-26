@@ -105,6 +105,9 @@ crate::config_enum!(
         #[serde(rename = "cr:replace", alias = "replace")]
         Replace,
 
+        #[serde(rename = "cr:SamplingRate", alias = "SamplingRate")]
+        SamplingRate,
+
         #[serde(rename = "cr:sdVersion", alias = "sdVersion")]
         SdVersion,
 
@@ -253,8 +256,10 @@ crate::config_struct!(
         pub regex: Option<CrTerm>,
         #[setting(default = CrTerm::default(&CrTerm::Repeated))]
         pub repeated: Option<CrTerm>,
-        #[setting(default = CrTerm::default(&CrTerm::Replace ))]
+        #[setting(default = CrTerm::default(&CrTerm::Replace))]
         pub replace: Option<CrTerm>,
+        #[setting(default = CrTerm::default(&CrTerm::SamplingRate))]
+        pub sampling_rate: Option<CrTerm>,
 
         #[setting(default = "https://schema.org/")]
         pub sc: Option<url::Url>,
