@@ -19,7 +19,6 @@ crate::config_enum!(
     ///
     /// This enum is inspired by the `Datatype` class in
     /// [CSVW](https://csvw.org/).
-    #[serde(untagged)]
     #[derive(Config)]
     pub enum DataType {
         /// Describes a boolean value.

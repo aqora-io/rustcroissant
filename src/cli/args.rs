@@ -56,8 +56,21 @@ pub struct VerifyArgs {
 /// Arguments for Generate.
 #[derive(Debug, Clone, Args)]
 pub struct GenerateArgs {
+    /// Path to input the data file. Use `-` to read input from stdin.
+    #[clap(value_parser = input_value_parser(), value_hint = ValueHint::FilePath)]
+    pub input: Input,
+    /// Path to output Croissant JSON file. Use `-` for stdout.
     #[clap(value_parser = output_value_parser(), value_hint = ValueHint::FilePath)]
     pub output: Output,
+    /// Dataset split name (e.g. train, test, validation)
+    #[clap(long, default_value = "default")]
+    pub split_name: String,
+    /// Column used as source identifier
+    #[clap(long, default_value = "id")]
+    pub source_id: String,
+    /// Suffix added to generated resources
+    #[clap(long, default_value = "parquet")]
+    pub suffix: String,
 }
 
 /// Arguments for Schema.

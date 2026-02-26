@@ -8,13 +8,13 @@ pub mod cli;
 pub mod convert;
 pub mod specs;
 
-fn main() -> miette::Result<()> {
+fn main() {
     let args = CliArguments::parse();
 
     match args.command {
         // TODO: manage this result
-        cli::Command::Verify(verify) => cli::verify(verify),
-        cli::Command::Generate(generate) => cli::generate(generate),
-        cli::Command::Schema(schema) => cli::schema(schema),
+        cli::Command::Verify(verify) => cli::verify(verify).expect("should work"),
+        cli::Command::Generate(generate) => cli::generate(generate).expect("should work"),
+        cli::Command::Schema(schema) => cli::schema(schema).expect("should work"),
     }
 }

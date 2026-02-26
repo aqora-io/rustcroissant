@@ -75,15 +75,7 @@ impl<'a> ParquetTransformer<'a> {
             id: field_name.clone().into(),
             name: Some(field_name.into()),
             data_type: vec![field.data_type().into()],
-            description: Some(
-                format!(
-                    "Column: '{}', type: '{}' {}",
-                    field.name(),
-                    field.data_type(),
-                    convert.suffix
-                )
-                .into(),
-            ),
+            description: Some(format!("Column: '{}' {}", field.name(), convert.suffix).into()),
             repeated: Some(matches!(
                 field.data_type(),
                 ArrowType::List(_)
