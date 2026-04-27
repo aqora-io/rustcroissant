@@ -2,6 +2,8 @@ use clap::Parser;
 
 use crate::cli::CliArguments;
 
+include!("arrow_aliases.rs");
+
 pub mod cli;
 
 #[cfg(feature = "convert")]

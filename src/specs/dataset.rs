@@ -312,7 +312,7 @@ mod tests {
                 assert!(term.name.is_some());
                 assert!(term.description.is_some());
             }
-            other => panic!("unexpected keyword variants: {:?}", other),
+            keywords => panic!("unexpected keyword variants: {keywords:?}"),
         }
     }
 
